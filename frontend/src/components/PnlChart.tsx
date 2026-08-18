@@ -15,27 +15,11 @@ import { useMemo, useState } from "react";
 import type { DailyPnL } from "../api/types";
 import { shortDate, usd } from "../lib/format";
 import { niceScale } from "../lib/scale";
+import { type Day, totalsByDate } from "../lib/series";
 
 const WIDTH = 900;
 const HEIGHT = 280;
 const PAD = { top: 18, right: 74, bottom: 28, left: 74 };
-
-interface Day {
-  date: string;
-  daily: number;
-  cumulative: number;
-}
-
-function totalsByDate(series: DailyPnL[]): Day[] {
-  const byDate = new Map<string, Day>();
-  for (const row of series) {
-    const day = byDate.get(row.date) ?? { date: row.date, daily: 0, cumulative: 0 };
-    day.daily += row.daily_usd;
-    day.cumulative += row.cumulative_usd;
-    byDate.set(row.date, day);
-  }
-  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
-}
 
 export function PnlChart({ series, book }: { series: DailyPnL[]; book: string | null }) {
   const [hovered, setHovered] = useState<Day | null>(null);

@@ -44,10 +44,20 @@ interactive docs at <http://localhost:8000/docs>.
 source .venv/bin/activate && python -m pytest
 ```
 
-158 tests, and they pass on a fresh clone **with no `data/` directory at all**:
-the suite runs against hand-written fixtures in `tests/fixtures/` that
-reproduce every quirk found in the real extracts. That is deliberate — the real
-files are confidential and are not in this repository.
+```bash
+cd frontend && npm test
+```
+
+159 backend tests and 22 on the front end, and they pass on a fresh clone
+**with no `data/` directory at all**: the suite runs against hand-written
+fixtures in `tests/fixtures/` that reproduce every quirk found in the real
+extracts. That is deliberate — the real files are confidential and are not in
+this repository.
+
+The frontend tests cover the pure logic only — axis scaling, formatting and the
+series aggregation — not the rendering. Those three are where a wrong answer is
+silent: a mis-scaled axis, a mis-grouped total and a mis-rounded figure all
+draw a chart that looks entirely normal.
 
 ---
 
