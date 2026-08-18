@@ -109,9 +109,9 @@ def test_swap_and_credit_use_opposite_sensitivity_conventions(priced, data):
     duration, CS01 positive means bought protection.
     """
     swap = _pnl(priced, "FIX-002")
-    dv01 = data.risk[
-        (data.risk["trade_id"] == "FIX-002") & (data.risk["risk_metric"] == "DV01")
-    ]["value"].iloc[0]
+    dv01 = data.risk[(data.risk["trade_id"] == "FIX-002") & (data.risk["risk_metric"] == "DV01")][
+        "value"
+    ].iloc[0]
 
     move_bp = (swap["current_level"] - swap["reference_level"]) * 100
     assert swap["pnl_ccy"] == pytest.approx(-move_bp * dv01)
@@ -278,9 +278,7 @@ def test_a_trade_without_a_price_is_excluded_and_reported(data):
 
 def test_a_swap_without_dv01_is_excluded_and_reported(data):
     """Assuming a zero sensitivity would silently report the swap as flat."""
-    risk = data.risk[
-        ~((data.risk["trade_id"] == "FIX-002") & (data.risk["risk_metric"] == "DV01"))
-    ]
+    risk = data.risk[~((data.risk["trade_id"] == "FIX-002") & (data.risk["risk_metric"] == "DV01"))]
     result = compute_pnl(
         type(data)(
             trades=data.trades,

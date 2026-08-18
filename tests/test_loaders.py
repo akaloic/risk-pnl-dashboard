@@ -114,9 +114,10 @@ def test_market_data_and_fx_load_with_parsed_timestamps():
     assert md["last_update_utc"].dt.tz is not None
     assert md["date"].dtype == "datetime64[ns]"
     assert not fx.empty
-    assert fx.set_index(["date", "ccy_pair"]).loc[
-        (pd.Timestamp("2026-08-05"), "USDJPY"), "spot_rate"
-    ] == 150.0
+    assert (
+        fx.set_index(["date", "ccy_pair"]).loc[(pd.Timestamp("2026-08-05"), "USDJPY"), "spot_rate"]
+        == 150.0
+    )
 
 
 def test_empty_numeric_cells_become_nan_not_zero():

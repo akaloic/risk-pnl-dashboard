@@ -167,9 +167,7 @@ def _flag_unknown_settlement(
         )
 
 
-def _flag_term_fx_settle_convention(
-    trades: pd.DataFrame, issues: list[DataQualityIssue]
-) -> None:
+def _flag_term_fx_settle_convention(trades: pd.DataFrame, issues: list[DataQualityIssue]) -> None:
     """Report term FX whose settle_date precedes its maturity.
 
     On those rows settle_date is the spot leg (trade date + 2 business days),
@@ -267,7 +265,5 @@ def settled_trade_ids(trades: pd.DataFrame, as_of: date = AS_OF_DATE) -> set[str
     settled = book.positions["position_status"] == PositionStatus.SETTLED.value
 
     return {
-        trade_id
-        for trade_ids in book.positions.loc[settled, "trade_ids"]
-        for trade_id in trade_ids
+        trade_id for trade_ids in book.positions.loc[settled, "trade_ids"] for trade_id in trade_ids
     }

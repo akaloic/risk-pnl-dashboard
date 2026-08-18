@@ -50,9 +50,9 @@ def test_multiplier_is_recoverable_from_the_risk_file():
     risk = load_risk_sensitivities_raw()
 
     trade = trades.loc["FIX-004"]
-    price = quotes[
-        (quotes["instrument_id"] == trade["instrument_id"]) & (quotes["date"] == AS_OF)
-    ]["px_mid"].iloc[0]
+    price = quotes[(quotes["instrument_id"] == trade["instrument_id"]) & (quotes["date"] == AS_OF)][
+        "px_mid"
+    ].iloc[0]
     fx = rates[(rates["ccy_pair"] == "USDJPY") & (rates["date"] == AS_OF)]["spot_rate"].iloc[0]
     delta_usd = risk[(risk["trade_id"] == "FIX-004") & (risk["risk_metric"] == "Delta_USD")][
         "value_usd"
@@ -72,9 +72,9 @@ def test_short_leg_derives_the_same_multiplier():
     risk = load_risk_sensitivities_raw()
 
     trade = trades.loc["FIX-006"]
-    price = quotes[
-        (quotes["instrument_id"] == trade["instrument_id"]) & (quotes["date"] == AS_OF)
-    ]["px_mid"].iloc[0]
+    price = quotes[(quotes["instrument_id"] == trade["instrument_id"]) & (quotes["date"] == AS_OF)][
+        "px_mid"
+    ].iloc[0]
     fx = rates[(rates["ccy_pair"] == "USDJPY") & (rates["date"] == AS_OF)]["spot_rate"].iloc[0]
     delta_usd = risk[(risk["trade_id"] == "FIX-006") & (risk["risk_metric"] == "Delta_USD")][
         "value_usd"

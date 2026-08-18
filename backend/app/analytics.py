@@ -86,9 +86,7 @@ def daily_pnl_series(
             seen.setdefault((issue.code, issue.entity_id), issue)
 
         for book_id, amount in valued.trades.groupby("book_id")["pnl_usd"].sum().items():
-            marks.append(
-                {"date": day.date(), "book_id": book_id, "cumulative_usd": float(amount)}
-            )
+            marks.append({"date": day.date(), "book_id": book_id, "cumulative_usd": float(amount)})
 
     series = pd.DataFrame(marks, columns=["date", "book_id", "cumulative_usd"])
     if series.empty:
@@ -161,6 +159,8 @@ def desk_summary(
     )
     summary["open_positions"] = summary["open_positions"].astype(int)
 
-    return summary[
-        ["book_id", "day_usd", "inception_usd", "trade_count", "open_positions"]
-    ].sort_values("book_id").reset_index(drop=True)
+    return (
+        summary[["book_id", "day_usd", "inception_usd", "trade_count", "open_positions"]]
+        .sort_values("book_id")
+        .reset_index(drop=True)
+    )

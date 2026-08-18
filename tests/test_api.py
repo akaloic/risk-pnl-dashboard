@@ -94,9 +94,7 @@ def test_pnl_series_and_cards_agree(client):
     """A card and the chart beside it must not disagree on the wire either."""
     body = client.get("/pnl").json()
 
-    final = {
-        row["book_id"]: row for row in body["series"] if row["date"] == body["as_of"]
-    }
+    final = {row["book_id"]: row for row in body["series"] if row["date"] == body["as_of"]}
     for card in body["by_book"]:
         assert card["inception_usd"] == pytest.approx(final[card["book_id"]]["cumulative_usd"])
         assert card["day_usd"] == pytest.approx(final[card["book_id"]]["daily_usd"])
@@ -183,9 +181,7 @@ def test_reconciliation_reports_coverage_and_findings(client, data):
     body = client.get("/reconciliation").json()
 
     assert {row["book_id"] for row in body["coverage"]} == set(data.trades["book_id"])
-    assert any(
-        issue["code"] == "SETTLED_TRADE_CARRIES_RISK" for issue in body["issues"]
-    )
+    assert any(issue["code"] == "SETTLED_TRADE_CARRIES_RISK" for issue in body["issues"])
 
 
 # --- contract and failure modes ----------------------------------------------

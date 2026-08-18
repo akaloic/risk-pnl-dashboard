@@ -79,9 +79,7 @@ def _value_usd_consistency(data: Dataset, issues: list[DataQualityIssue]) -> Non
     every swap in the file for ever -- the kind of permanently red check that
     teaches a desk to ignore the panel.
     """
-    convertible = data.risk[
-        (data.risk["unit"] == "amount") & (data.risk["ccy"] != REPORTING_CCY)
-    ]
+    convertible = data.risk[(data.risk["unit"] == "amount") & (data.risk["ccy"] != REPORTING_CCY)]
 
     for row in convertible.itertuples(index=False):
         struck_on = row.as_of_date.date()
@@ -109,9 +107,7 @@ def _value_usd_consistency(data: Dataset, issues: list[DataQualityIssue]) -> Non
         )
 
 
-def _risk_on_settled_trades(
-    data: Dataset, as_of: date, issues: list[DataQualityIssue]
-) -> None:
+def _risk_on_settled_trades(data: Dataset, as_of: date, issues: list[DataQualityIssue]) -> None:
     """Sensitivities still published for trades that have already settled.
 
     Reported per book rather than per trade: what a risk manager needs is the

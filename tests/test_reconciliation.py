@@ -139,9 +139,9 @@ def test_additive_metrics_are_summed_per_book(data):
         (data.risk["book_id"] == "RATES-TEST-01") & (data.risk["risk_metric"] == "DV01")
     ]["value_usd"].sum()
 
-    total = grid[
-        (grid["book_id"] == "RATES-TEST-01") & (grid["risk_metric"] == "DV01")
-    ]["total_usd"].iloc[0]
+    total = grid[(grid["book_id"] == "RATES-TEST-01") & (grid["risk_metric"] == "DV01")][
+        "total_usd"
+    ].iloc[0]
 
     assert total == pytest.approx(expected)
 

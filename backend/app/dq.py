@@ -67,8 +67,7 @@ def _parse_slashed_date(text: str) -> tuple[date | None, str]:
 
     if month_first and day_first and month_first != day_first:
         return None, (
-            f"{text!r} is ambiguous: valid as both MM/DD ({month_first}) "
-            f"and DD/MM ({day_first})"
+            f"{text!r} is ambiguous: valid as both MM/DD ({month_first}) and DD/MM ({day_first})"
         )
 
     parsed = month_first or day_first

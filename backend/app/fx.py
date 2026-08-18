@@ -31,8 +31,7 @@ class FxRates:
 
     def __init__(self, frame: pd.DataFrame):
         self._rates: dict[tuple[pd.Timestamp, str], float] = {
-            (row.date, row.ccy_pair): float(row.spot_rate)
-            for row in frame.itertuples(index=False)
+            (row.date, row.ccy_pair): float(row.spot_rate) for row in frame.itertuples(index=False)
         }
         self._conversions = self._map_currencies(frame)
         self._dates = frozenset(frame["date"].unique())
@@ -85,8 +84,7 @@ class FxRates:
             return self._pair_currencies[ccy_pair]
         except KeyError:
             raise KeyError(
-                f"{ccy_pair} is not in the FX extract. Known pairs: "
-                f"{sorted(self._pair_currencies)}"
+                f"{ccy_pair} is not in the FX extract. Known pairs: {sorted(self._pair_currencies)}"
             ) from None
 
     def rate(self, ccy_pair: str, on: date) -> float:
@@ -117,8 +115,7 @@ class FxRates:
             pair, divide = self._conversions[ccy]
         except KeyError:
             raise KeyError(
-                f"No USD pair available to convert {ccy}. Known: "
-                f"{sorted(self._conversions)}"
+                f"No USD pair available to convert {ccy}. Known: {sorted(self._conversions)}"
             ) from None
 
         spot = self.rate(pair, on)

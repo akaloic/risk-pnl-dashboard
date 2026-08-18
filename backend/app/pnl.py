@@ -105,8 +105,7 @@ class _Levels:
 
     def __init__(self, data: Dataset):
         self._quotes: dict[tuple[str, pd.Timestamp], pd.Series] = {
-            (row.instrument_id, row.date): row
-            for row in data.quotes.itertuples(index=False)
+            (row.instrument_id, row.date): row for row in data.quotes.itertuples(index=False)
         }
         self._fx = data.fx
 
@@ -147,8 +146,7 @@ class _Inputs:
 
     def __init__(self, data: Dataset):
         self._risk: dict[tuple[str, str], pd.Series] = {
-            (row.trade_id, row.risk_metric): row
-            for row in data.risk.itertuples(index=False)
+            (row.trade_id, row.risk_metric): row for row in data.risk.itertuples(index=False)
         }
         self._pairs = {
             pair: data.fx.pair_currencies(pair)
@@ -224,6 +222,7 @@ PRICERS: dict[str, tuple[PnLMethod, Pricer]] = {
     ProductType.EQ_OPTION.value: (PnLMethod.EQUITY_CONTRACT, _price_equity),
     ProductType.EQ_FUTURE.value: (PnLMethod.EQUITY_CONTRACT, _price_equity),
 }
+
 
 def compute_pnl(data: Dataset, as_of: date = AS_OF_DATE, since: date | None = None) -> PnLResult:
     """Value every trade held on `as_of`.
@@ -302,9 +301,7 @@ def compute_pnl(data: Dataset, as_of: date = AS_OF_DATE, since: date | None = No
 def _validate_window(data: Dataset, as_of: date, since: date | None) -> None:
     """Refuse a valuation the extract cannot support, before pricing anything."""
     if since is not None and since > as_of:
-        raise ValueError(
-            f"since={since} is after as_of={as_of}; a P&L window cannot run backwards"
-        )
+        raise ValueError(f"since={since} is after as_of={as_of}; a P&L window cannot run backwards")
 
     available = data.business_days
     for label, day in (("as_of", as_of), ("since", since)):
