@@ -49,6 +49,10 @@ class IssueCode(str, Enum):
     SETTLEMENT_STATE_UNKNOWN = "SETTLEMENT_STATE_UNKNOWN"
     TERM_FX_SETTLE_BEFORE_MATURITY = "TERM_FX_SETTLE_BEFORE_MATURITY"
 
+    # Inputs the pricing engine needed and did not find.
+    MISSING_MARKET_DATA = "MISSING_MARKET_DATA"
+    MISSING_SENSITIVITY = "MISSING_SENSITIVITY"
+
 
 class DataQualityIssue(BaseModel):
     """One finding, with the treatment that was applied to it.

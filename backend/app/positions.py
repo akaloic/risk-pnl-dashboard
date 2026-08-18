@@ -89,7 +89,7 @@ class PositionBook(NamedTuple):
     issues: list[DataQualityIssue]
 
 
-def _closing_dates(trades: pd.DataFrame) -> pd.Series:
+def closing_dates(trades: pd.DataFrame) -> pd.Series:
     """The date each trade ceases to be a position, NaT if settlement never closes it."""
     closing = pd.Series(pd.NaT, index=trades.index, dtype="datetime64[ns]")
     for product_type, field in _CLOSING_DATE_FIELD.items():
@@ -220,7 +220,7 @@ def build_positions(trades: pd.DataFrame, as_of: date = AS_OF_DATE) -> PositionB
 
     df = trades[trades["trade_date"].notna() & (trades["trade_date"] <= as_of_ts)].copy()
 
-    closing = _closing_dates(df)
+    closing = closing_dates(df)
     settled = closing.notna() & (closing < as_of_ts)
 
     _flag_settled_but_live(df, settled, closing, issues)

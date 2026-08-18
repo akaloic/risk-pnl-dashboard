@@ -36,6 +36,12 @@ class FxRates:
         }
         self._conversions = self._map_currencies(frame)
         self._dates = frozenset(frame["date"].unique())
+        self._pair_currencies: dict[str, tuple[str, str]] = {
+            row.ccy_pair: (row.base_ccy, row.quote_ccy)
+            for row in frame[["ccy_pair", "base_ccy", "quote_ccy"]]
+            .drop_duplicates()
+            .itertuples(index=False)
+        }
 
     @staticmethod
     def _map_currencies(frame: pd.DataFrame) -> dict[str, tuple[str, bool]]:
@@ -67,6 +73,21 @@ class FxRates:
             conversions[foreign] = (pair, divide)
 
         return conversions
+
+    def pair_currencies(self, ccy_pair: str) -> tuple[str, str]:
+        """The (base, quote) currencies of a pair.
+
+        FX P&L accrues in the quote currency -- a USDJPY position earns or
+        loses yen -- so pricing needs to know which side is which rather than
+        assuming the trade currency is the one the profit lands in.
+        """
+        try:
+            return self._pair_currencies[ccy_pair]
+        except KeyError:
+            raise KeyError(
+                f"{ccy_pair} is not in the FX extract. Known pairs: "
+                f"{sorted(self._pair_currencies)}"
+            ) from None
 
     def rate(self, ccy_pair: str, on: date) -> float:
         """Spot rate for `ccy_pair` on `on`, by exact date."""

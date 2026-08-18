@@ -9,5 +9,5 @@ as_of_date,trade_id,book_id,instrument_id,risk_metric,value,ccy,value_usd,unit,c
 2026-08-05,FIX-005,CREDIT-TEST-01,TST-CORP-2029,JTD_USD,-550000.0,USD,-550000.00,amount_usd,2026-08-05T06:30:00Z,
 2026-08-05,FIX-006,EQD-TEST-01,NKY-FUT-2026-09,Delta_USD,-1283333.33,USD,-1283333.33,amount_usd,2026-08-05T06:30:00Z,short position - delta signed by direction
 2026-08-05,FIX-007,FX-TEST-01,USDJPY,Delta_USD,3000000.0,USD,3000000.00,amount_usd,2026-08-05T06:30:00Z,
-2026-08-05,FIX-008,FX-TEST-01,EURUSD,Delta_USD,2170000.0,USD,2170000.00,amount_usd,2026-08-05T06:30:00Z,delta still carried after settlement
+2026-08-05,FIX-008,FX-TEST-01,EURUSD,Delta_USD,2178000.0,USD,2178000.00,amount_usd,2026-08-05T06:30:00Z,delta still carried after settlement - 2m EUR at the as-of rate
 2026-08-05,FIX-009,FX-TEST-01,USDCNH,Delta_USD,4000000.0,USD,4000000.00,amount_usd,2026-08-05T06:30:00Z,
