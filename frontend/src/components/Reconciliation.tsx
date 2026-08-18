@@ -21,10 +21,10 @@ export function Reconciliation({ recon }: { recon: ReconciliationResponse }) {
       <table>
         <thead>
           <tr>
-            <th>Book</th>
-            <th className="num">Trades</th>
-            <th className="num">With risk</th>
-            <th className="num">Coverage</th>
+            <th scope="col">Book</th>
+            <th scope="col" className="num">Trades</th>
+            <th scope="col" className="num">With risk</th>
+            <th scope="col" className="num">Coverage</th>
           </tr>
         </thead>
         <tbody>
@@ -52,9 +52,9 @@ export function Reconciliation({ recon }: { recon: ReconciliationResponse }) {
         <table>
           <thead>
             <tr>
-              <th>Check</th>
-              <th>Entity</th>
-              <th>What was found</th>
+              <th scope="col">Check</th>
+              <th scope="col">Entity</th>
+              <th scope="col">What was found</th>
             </tr>
           </thead>
           <tbody>

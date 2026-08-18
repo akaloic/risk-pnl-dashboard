@@ -38,6 +38,9 @@ export function DeskSummary({ pnl, selected, onSelect }: Props) {
           className={`card clickable${selected === book.book_id ? " selected" : ""}`}
           onClick={() => onSelect(selected === book.book_id ? null : book.book_id)}
           aria-expanded={selected === book.book_id}
+          // The card reads out as a wall of figures otherwise: the accessible
+          // name has to say which book and what the control does.
+          aria-label={`${book.book_id}: show the trades behind this book's P&L`}
         >
           <h3>{book.book_id}</h3>
           <div className={`headline ${signOf(book.day_usd)}`}>{usd(book.day_usd)}</div>

@@ -102,11 +102,11 @@ export function DataQualityPanel({ quality }: { quality: DataQualityResponse }) 
         <table>
           <thead>
             <tr>
-              <th>Severity</th>
-              <th>Check</th>
-              <th>Entity</th>
-              <th>What was found</th>
-              <th>Treatment applied</th>
+              <th scope="col">Severity</th>
+              <th scope="col">Check</th>
+              <th scope="col">Entity</th>
+              <th scope="col">What was found</th>
+              <th scope="col">Treatment applied</th>
             </tr>
           </thead>
           <tbody>

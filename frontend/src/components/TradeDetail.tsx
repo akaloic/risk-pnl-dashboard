@@ -65,14 +65,14 @@ export function TradeDetail({ book, asOf, expected, onClose }: Props) {
           <table>
             <thead>
               <tr>
-                <th>Trade</th>
-                <th>Instrument</th>
-                <th>Method</th>
-                <th className="num">Entry</th>
-                <th className="num">Mark</th>
-                <th className="num">P&amp;L (local)</th>
-                <th>Ccy</th>
-                <th className="num">P&amp;L (USD)</th>
+                <th scope="col">Trade</th>
+                <th scope="col">Instrument</th>
+                <th scope="col">Method</th>
+                <th scope="col" className="num">Entry</th>
+                <th scope="col" className="num">Mark</th>
+                <th scope="col" className="num">P&amp;L (local)</th>
+                <th scope="col">Ccy</th>
+                <th scope="col" className="num">P&amp;L (USD)</th>
               </tr>
             </thead>
             <tbody>

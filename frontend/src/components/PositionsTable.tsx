@@ -35,15 +35,19 @@ export function PositionsTable({ positions }: { positions: Position[] }) {
     });
   }, [positions, sort, openOnly]);
 
+  // The control is a button inside the header rather than a click handler on
+  // the cell itself: a bare onClick on a <th> cannot be reached by keyboard and
+  // announces nothing, so the column would be unsortable without a mouse.
   const header = (key: SortKey, label: string, numeric = false) => (
     <th
+      scope="col"
       className={numeric ? "num" : undefined}
-      onClick={() => setSort(key)}
-      style={{ cursor: "pointer" }}
-      title="Sort"
+      aria-sort={sort === key ? "descending" : "none"}
     >
-      {label}
-      {sort === key ? " ▾" : ""}
+      <button type="button" className="sort" onClick={() => setSort(key)}>
+        {label}
+        {sort === key ? " ▾" : ""}
+      </button>
     </th>
   );
 
@@ -73,13 +77,13 @@ export function PositionsTable({ positions }: { positions: Position[] }) {
             <tr>
               {header("book_id", "Book")}
               {header("instrument_id", "Instrument")}
-              <th>Product</th>
-              <th>Ccy</th>
+              <th scope="col">Product</th>
+              <th scope="col">Ccy</th>
               {header("net_quantity", "Net qty", true)}
-              <th className="num">Gross qty</th>
+              <th scope="col" className="num">Gross qty</th>
               {header("net_notional", "Net notional", true)}
-              <th className="num">Trades</th>
-              <th>Status</th>
+              <th scope="col" className="num">Trades</th>
+              <th scope="col">Status</th>
             </tr>
           </thead>
           <tbody>
