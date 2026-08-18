@@ -101,19 +101,19 @@ def closing_dates(trades: pd.DataFrame) -> pd.Series:
 def _flag_settled_but_live(
     trades: pd.DataFrame,
     settled: pd.Series,
-    closing_dates: pd.Series,
+    closed_on: pd.Series,
     issues: list[DataQualityIssue],
 ) -> None:
     """Report trades the blotter still calls LIVE after they have closed.
 
-    Reads the closing date from `closing_dates` rather than from settle_date:
-    a forward or NDF closes on maturity, so quoting its settle_date here would
-    report the wrong date -- and a blank one would not print at all.
+    Reads the date from `closed_on` rather than from settle_date: a forward or
+    NDF closes on maturity, so quoting its settle_date here would report the
+    wrong date -- and a blank one would not print at all.
     """
     contradictory = settled & (trades["status"].str.upper() == "LIVE")
 
     for idx in trades.index[contradictory]:
-        closing = closing_dates[idx]
+        closing = closed_on[idx]
         issues.append(
             DataQualityIssue(
                 code=IssueCode.SETTLED_TRADE_MARKED_LIVE,

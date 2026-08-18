@@ -1,0 +1,15 @@
+# Lint and format settings for the backend and its tests.
+line-length = 100
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "ARG", "RET", "C4"]
+
+[lint.isort]
+# The backend is imported as `app`; without this it is grouped with the
+# third-party packages and the import blocks come out in the wrong order.
+known-first-party = ["app"]
+
+[lint.per-file-ignores]
+# The pricers share one signature so they can sit behind a single registry;
+# the ones with nothing to look up still take the inputs argument.
+"backend/app/pnl.py" = ["ARG001"]

@@ -33,9 +33,10 @@ Equity trades book a notional of zero, so their size is quantity x multiplier
 and nothing else; a notional-driven valuation would report them as flat.
 """
 
+from collections.abc import Callable
 from datetime import date
 from enum import Enum
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 import pandas as pd
 from pydantic import BaseModel
@@ -234,7 +235,15 @@ def compute_pnl(data: Dataset, as_of: date = AS_OF_DATE, since: date | None = No
 
     A settled FX trade is valued at its closing date rather than at `as_of`:
     the cash was exchanged, so its P&L is realised and stops moving with spot.
+
+    Both dates are validated up front. Valuing the book on a day the desk never
+    published would otherwise price the handful of trades that happen to close
+    on an earlier date and silently report the total as the desk's P&L, and an
+    inverted window would measure the market backwards and return a plausible
+    number with the wrong sign.
     """
+    _validate_window(data, as_of, since)
+
     as_of_ts = pd.Timestamp(as_of)
     issues: list[DataQualityIssue] = []
 
@@ -252,7 +261,7 @@ def compute_pnl(data: Dataset, as_of: date = AS_OF_DATE, since: date | None = No
         close = closing[idx]
         valuation_date = min(as_of_ts, close) if pd.notna(close) else as_of_ts
 
-        reference, current, issue = _levels_for(trade, levels, valuation_date, since, method)
+        reference, current, issue = _levels_for(trade, levels, valuation_date, since, close)
         if issue is not None:
             issues.append(issue)
             continue
@@ -290,11 +299,35 @@ def compute_pnl(data: Dataset, as_of: date = AS_OF_DATE, since: date | None = No
     return PnLResult(trades=priced, issues=merge(issues))
 
 
-def _levels_for(trade, levels, valuation_date, since, method):
+def _validate_window(data: Dataset, as_of: date, since: date | None) -> None:
+    """Refuse a valuation the extract cannot support, before pricing anything."""
+    if since is not None and since > as_of:
+        raise ValueError(
+            f"since={since} is after as_of={as_of}; a P&L window cannot run backwards"
+        )
+
+    available = data.business_days
+    for label, day in (("as_of", as_of), ("since", since)):
+        if day is None or pd.Timestamp(day) in available:
+            continue
+        raise ValueError(
+            f"{label}={day} is not a day this extract prices. It covers "
+            f"{available[0].date()} to {available[-1].date()}, business days only."
+        )
+
+
+def _levels_for(trade, levels, valuation_date, since, closing_date):
     """Resolve the reference and current level, or explain why we cannot."""
     current = levels.market(trade, valuation_date.date())
     if current is None:
         return None, None, _missing_quote(trade, valuation_date, "valuation")
+
+    # A trade that closed on or before the window opened earned nothing inside
+    # it: its P&L was realised earlier. Referencing the window's opening level
+    # against a closing level that precedes it would measure the market
+    # backwards and credit the desk with a move it never had.
+    if since is not None and pd.notna(closing_date) and closing_date <= pd.Timestamp(since):
+        return current, current, None
 
     if since is None or trade["trade_date"] > pd.Timestamp(since):
         return float(trade["trade_price"]), current, None

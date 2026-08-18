@@ -37,7 +37,7 @@ def _pnl(priced, trade_id):
 # --- per-product economics ---------------------------------------------------
 
 
-def test_bond_pnl_is_price_move_on_face(priced, data):
+def test_bond_pnl_is_price_move_on_face(priced):
     """Clean price is per 100, so the move is a percentage of the face amount.
 
     FIX-001 bought 1bn JPY of face at 100.00, marked at 101.00: 1% of face.
@@ -214,6 +214,30 @@ def test_a_trade_struck_inside_the_window_measures_from_its_own_price(data):
     assert row["reference_level"] == pytest.approx(38_000)
 
 
+def test_a_trade_settled_before_the_window_earns_nothing_in_it(data):
+    """Otherwise the daily series credits realised trades with phantom moves.
+
+    FIX-008 settled on 2026-07-29. Over 08-04 to 08-05 it must contribute zero:
+    referencing the window's opening level against a closing level that
+    precedes it measures the market backwards.
+    """
+    window = compute_pnl(data, as_of=AS_OF, since=date(2026, 8, 4))
+    row = _pnl(window, "FIX-008")
+
+    assert row["reference_level"] == row["current_level"]
+    assert row["pnl_ccy"] == 0
+    assert row["pnl_usd"] == 0
+
+
+def test_a_trade_settling_inside_the_window_keeps_its_move(data):
+    """The complement: it closed during the window, so the move up to then counts."""
+    window = compute_pnl(data, as_of=AS_OF, since=date(2026, 7, 2))
+    row = _pnl(window, "FIX-008")
+
+    assert row["valuation_date"] == date(2026, 7, 29)
+    assert row["pnl_ccy"] != 0
+
+
 def test_inception_and_window_differ(data):
     inception = _pnl(compute_pnl(data, as_of=AS_OF), "FIX-001")
     window = _pnl(compute_pnl(data, as_of=AS_OF, since=date(2026, 8, 4)), "FIX-001")
@@ -271,6 +295,27 @@ def test_a_swap_without_dv01_is_excluded_and_reported(data):
 
     assert "FIX-002" not in set(result.trades["trade_id"])
     assert IssueCode.MISSING_SENSITIVITY in {issue.code for issue in result.issues}
+
+
+def test_a_backwards_window_is_refused(data):
+    """An inverted window measures the market in reverse and looks plausible."""
+    with pytest.raises(ValueError, match="cannot run backwards"):
+        compute_pnl(data, as_of=date(2026, 8, 4), since=date(2026, 8, 5))
+
+
+def test_valuing_on_an_unpublished_day_is_refused(data):
+    """A Saturday prices only the trades that closed earlier, not the book.
+
+    Returning that partial total silently would put a meaningless number on a
+    desk summary card.
+    """
+    with pytest.raises(ValueError, match="not a day this extract prices"):
+        compute_pnl(data, as_of=date(2026, 8, 8))
+
+
+def test_an_unpublished_reference_day_is_refused(data):
+    with pytest.raises(ValueError, match="since=2026-08-08"):
+        compute_pnl(data, as_of=date(2026, 8, 5), since=date(2026, 8, 8))
 
 
 def test_trades_booked_after_the_as_of_date_are_not_priced(data):
