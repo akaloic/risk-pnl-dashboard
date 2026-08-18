@@ -9,6 +9,7 @@
 
 import { useMemo, useState } from "react";
 import type { DataQualityIssue, DataQualityResponse, Severity } from "../api/types";
+import { Empty } from "./Loading";
 
 const SEVERITY_ORDER: Severity[] = ["ERROR", "WARNING", "INFO"];
 
@@ -94,6 +95,9 @@ export function DataQualityPanel({ quality }: { quality: DataQualityResponse }) 
         </span>
       </div>
 
+      {issues.length === 0 ? (
+        <Empty>Nothing to report at this severity.</Empty>
+      ) : (
       <div className="scroll">
         <table>
           <thead>
@@ -120,6 +124,7 @@ export function DataQualityPanel({ quality }: { quality: DataQualityResponse }) 
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

@@ -12,6 +12,7 @@
 import { useMemo, useState } from "react";
 import type { Position } from "../api/types";
 import { plain, signOf } from "../lib/format";
+import { Empty } from "./Loading";
 
 type SortKey = "book_id" | "instrument_id" | "net_quantity" | "net_notional";
 
@@ -61,6 +62,11 @@ export function PositionsTable({ positions }: { positions: Position[] }) {
         </label>
       </p>
 
+      {rows.length === 0 ? (
+        <Empty>
+          No positions on this date{openOnly ? " once settled trades are hidden" : ""}.
+        </Empty>
+      ) : (
       <div className="scroll">
         <table>
           <thead>
@@ -99,6 +105,7 @@ export function PositionsTable({ positions }: { positions: Position[] }) {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

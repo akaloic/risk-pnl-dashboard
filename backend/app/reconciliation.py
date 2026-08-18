@@ -65,10 +65,14 @@ def _risk_without_trades(data: Dataset, issues: list[DataQualityIssue]) -> None:
         )
 
 
-def _value_usd_consistency(
-    data: Dataset, as_of: date, issues: list[DataQualityIssue]
-) -> None:
+def _value_usd_consistency(data: Dataset, issues: list[DataQualityIssue]) -> None:
     """Check the library's USD figures against the published FX rates.
+
+    Each row is converted at its own as_of_date, not at the date being viewed.
+    The risk file is a snapshot: its USD figures were struck on the day it was
+    computed, so replaying an earlier day and converting at that day's rate
+    compares two different dates and reports every row as broken -- 16 of them
+    on this extract, all spurious.
 
     Restricted to rows denominated in a currency. Duration is quoted in years,
     and converting a tenor through an exchange rate would raise a mismatch on
@@ -80,7 +84,8 @@ def _value_usd_consistency(
     ]
 
     for row in convertible.itertuples(index=False):
-        expected = data.fx.to_usd(row.value, row.ccy, as_of)
+        struck_on = row.as_of_date.date()
+        expected = data.fx.to_usd(row.value, row.ccy, struck_on)
         tolerance = max(_ABSOLUTE_TOLERANCE_USD, abs(expected) * _RELATIVE_TOLERANCE)
         if abs(expected - row.value_usd) <= tolerance:
             continue
@@ -93,7 +98,8 @@ def _value_usd_consistency(
                 entity_id=f"{row.trade_id}/{row.risk_metric}",
                 detail=(
                     f"{row.value:,.2f} {row.ccy} converts to {expected:,.2f} USD at the "
-                    f"{as_of} rate, but the file publishes {row.value_usd:,.2f}"
+                    f"{struck_on} rate the row was struck on, but the file "
+                    f"publishes {row.value_usd:,.2f}"
                 ),
                 treatment=(
                     "Reported: the two sources disagree on the same figure, so "
@@ -143,7 +149,7 @@ def reconcile(data: Dataset, as_of: date = AS_OF_DATE) -> list[DataQualityIssue]
 
     _trades_without_risk(data, issues)
     _risk_without_trades(data, issues)
-    _value_usd_consistency(data, as_of, issues)
+    _value_usd_consistency(data, issues)
     _risk_on_settled_trades(data, as_of, issues)
 
     return merge(issues)

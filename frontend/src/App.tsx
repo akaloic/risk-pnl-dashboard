@@ -74,7 +74,12 @@ export default function App() {
       </nav>
 
       {tab === "summary" && (
-        <Loadable loading={pnl.loading} error={pnl.error} onRetry={pnl.reload}>
+        <Loadable
+          loading={pnl.loading}
+          refreshing={pnl.refreshing}
+          error={pnl.error}
+          onRetry={pnl.reload}
+        >
           {pnl.data && (
             <>
               <DeskSummary pnl={pnl.data} />
@@ -104,6 +109,7 @@ export default function App() {
       {tab === "positions" && (
         <Loadable
           loading={positions.loading}
+          refreshing={positions.refreshing}
           error={positions.error}
           onRetry={positions.reload}
         >
@@ -112,7 +118,12 @@ export default function App() {
       )}
 
       {tab === "risk" && (
-        <Loadable loading={risk.loading} error={risk.error} onRetry={risk.reload}>
+        <Loadable
+          loading={risk.loading}
+          refreshing={risk.refreshing}
+          error={risk.error}
+          onRetry={risk.reload}
+        >
           {risk.data && <RiskGrid risk={risk.data} />}
         </Loadable>
       )}
@@ -121,12 +132,18 @@ export default function App() {
         <>
           <Loadable
             loading={quality.loading}
+            refreshing={quality.refreshing}
             error={quality.error}
             onRetry={quality.reload}
           >
             {quality.data && <DataQualityPanel quality={quality.data} />}
           </Loadable>
-          <Loadable loading={recon.loading} error={recon.error} onRetry={recon.reload}>
+          <Loadable
+            loading={recon.loading}
+            refreshing={recon.refreshing}
+            error={recon.error}
+            onRetry={recon.reload}
+          >
             {recon.data && <Reconciliation recon={recon.data} />}
           </Loadable>
         </>

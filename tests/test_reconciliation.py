@@ -65,6 +65,21 @@ def test_published_usd_values_are_checked_against_the_rate_grid(data):
     assert [issue.entity_id for issue in found] == ["FIX-001/DV01"]
 
 
+def test_usd_values_are_checked_at_the_date_they_were_struck(data):
+    """Replaying an earlier day must not report the whole risk file as broken.
+
+    The risk file is a snapshot: its USD figures were converted on the day it
+    was computed. Converting them at the date being *viewed* compares two
+    different days and flags every foreign-currency row -- 16 spurious breaks
+    on the real extract.
+    """
+    on_the_day = reconcile(data, AS_OF)
+    replayed = reconcile(data, date(2026, 7, 2))
+
+    assert _issues_for(on_the_day, IssueCode.VALUE_USD_MISMATCH) == []
+    assert _issues_for(replayed, IssueCode.VALUE_USD_MISMATCH) == []
+
+
 def test_durations_are_not_run_through_the_rate_check(data):
     """Converting a tenor would fail on every swap in the file, permanently.
 
