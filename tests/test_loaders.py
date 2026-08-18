@@ -28,10 +28,18 @@ def test_missing_file_names_the_path_and_how_to_fix_it(tmp_path, monkeypatch):
 def test_trades_load_with_expected_dtypes():
     df = load_trades_raw()
 
-    assert len(df) == 4
+    assert len(df) == 8
     assert df["trade_date"].dtype == "datetime64[ns]"
     assert df["notional"].dtype.kind in "if"
     assert df["quantity"].dtype.kind in "if"
+
+
+def test_raw_loader_leaves_blotter_defects_untouched():
+    """The raw frame is the source of truth for reconciliation, warts and all."""
+    df = load_trades_raw()
+
+    assert not df["trade_id"].is_unique  # duplicate row still present
+    assert (df["quantity"] < 0).any()  # sign conflict not yet normalised
 
 
 def test_malformed_trade_date_is_left_as_nat_for_the_dq_layer():
@@ -48,11 +56,18 @@ def test_malformed_trade_date_is_left_as_nat_for_the_dq_layer():
 
 
 def test_blank_settle_date_is_distinct_from_a_malformed_one():
+    """Both read as NaT here, which is why the DQ layer reports them apart.
+
+    FIX-007 has a genuinely blank settle_date (reported, never invented) while
+    FIX-003 has a malformed trade_date (repaired). Conflating the two would
+    either invent a settlement or discard a repairable trade.
+    """
     df = load_trades_raw().set_index("trade_id")
 
-    # Every fixture row has a settle date; a blank one would also read as NaT,
-    # which is why the DQ layer reports missing and malformed dates separately.
-    assert df["settle_date"].notna().all()
+    assert pd.isna(df.loc["FIX-007", "settle_date"])
+    assert df.loc["FIX-007", "trade_date"] == pd.Timestamp("2026-07-30")
+    assert pd.isna(df.loc["FIX-003", "trade_date"])
+    assert df.loc["FIX-003", "settle_date"] == pd.Timestamp("2026-08-27")
 
 
 def test_risk_metric_spelling_is_normalized_onto_the_glossary():
@@ -64,7 +79,7 @@ def test_risk_metric_spelling_is_normalized_onto_the_glossary():
     df = load_risk_sensitivities_raw()
 
     assert "DeltaUSD" not in set(df["risk_metric"])
-    assert set(df["risk_metric"]) == {"DV01", "Duration", "Delta_USD"}
+    assert set(df["risk_metric"]) == {"DV01", "Duration", "Spread01", "JTD_USD", "Delta_USD"}
     assert (df.set_index("trade_id").loc["FIX-003", "risk_metric"]) == "Delta_USD"
 
 

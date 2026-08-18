@@ -81,6 +81,12 @@ def load_trades_raw(path: Path | None = None) -> pd.DataFrame:
     # MM/DD/YYYY; those rows must surface as NaT here so the data-quality layer
     # can repair them explicitly and report what it did, rather than have a
     # permissive parser guess at the day/month order behind our back.
+    #
+    # The parse destroys the offending text, so keep trade_date's original
+    # string alongside it: the repair needs the source value. The data-quality
+    # layer drops this column once it has run.
+    df["trade_date_raw"] = df["trade_date"].astype(str)
+
     for col in ("trade_date", "settle_date", "maturity_date"):
         df[col] = pd.to_datetime(df[col], format="%Y-%m-%d", errors="coerce")
 
