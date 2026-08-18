@@ -3,13 +3,8 @@
 import pandas as pd
 import pytest
 
-from app.dq import (
-    SIGN_BY_DIRECTION,
-    IssueCode,
-    Severity,
-    _parse_slashed_date,
-    clean_trades,
-)
+from app.dq import SIGN_BY_DIRECTION, _parse_slashed_date, clean_trades
+from app.issues import IssueCode, Severity
 from app.loaders import load_trades_raw
 from app.models import Direction
 
@@ -193,9 +188,21 @@ def test_helper_column_does_not_leak_downstream(cleaned):
     assert "trade_date_raw" not in cleaned.trades.columns
 
 
-def test_issue_ordering_is_deterministic(cleaned):
-    codes = [(issue.code.value, issue.entity_id) for issue in cleaned.issues]
-    assert codes == sorted(codes)
+def test_issues_are_ordered_worst_first_and_deterministically(cleaned):
+    """Ordering is a product decision, not an accident of insertion order.
+
+    A risk manager opening the panel should meet the figures that would have
+    been wrong before the ones that were safely repaired.
+    """
+    severities = [issue.severity for issue in cleaned.issues]
+    assert severities == sorted(severities, key=lambda s: 0 if s == Severity.ERROR else 1)
+
+    within_error = [
+        (issue.code.value, issue.entity_id)
+        for issue in cleaned.issues
+        if issue.severity == Severity.ERROR
+    ]
+    assert within_error == sorted(within_error)
 
 
 def test_cleaning_does_not_mutate_the_caller_frame():

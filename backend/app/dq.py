@@ -1,4 +1,4 @@
-"""Blotter data quality: detect, treat, and report -- never silently swallow.
+"""Blotter cleaning: detect, treat, and report -- never silently swallow.
 
 Operational extracts arrive with defects. The rule applied throughout this
 module is that a defect is either repaired with a treatment we can defend in
@@ -6,62 +6,20 @@ words, or escalated untreated -- but it is always recorded. Nothing is quietly
 dropped on the way to a P&L number, because the figure a trader disputes at
 07:30 is only useful if we can say exactly what the tool changed underneath it.
 
-Every issue carries a stable code, so the data-quality report, the tests and
-the README anomaly table all refer to the same thing by the same name.
+Scope is the trade file alone. Checks that need another extract to make sense
+belong to the engine that joins them: settlement state lives with positions,
+valuation consistency with pricing. They all report through the shared
+vocabulary in app.issues.
 """
 
 import re
 from datetime import date
-from enum import Enum
 from typing import NamedTuple
 
 import pandas as pd
-from pydantic import BaseModel
 
+from app.issues import DataQualityIssue, IssueCode, Severity, merge
 from app.models import Direction
-
-
-class Severity(str, Enum):
-    """How much attention an issue needs, given the treatment applied to it.
-
-    Graded by impact on the numbers rather than by how exotic the defect looks,
-    so a risk manager scanning the report sees what would actually have moved a
-    figure.
-    """
-
-    # Would have produced a materially wrong position, P&L or risk number, or
-    # could not be treated automatically at all. Someone has to look.
-    ERROR = "ERROR"
-    # Genuine defect with a safe, deterministic treatment -- repaired, or
-    # handled conservatively. Recorded so the source system still gets fixed.
-    WARNING = "WARNING"
-
-
-class IssueCode(str, Enum):
-    # Blotter-level defects, detected while cleaning the trade file.
-    DUPLICATE_TRADE_ROW = "DUPLICATE_TRADE_ROW"
-    CONFLICTING_TRADE_ROW = "CONFLICTING_TRADE_ROW"
-    MALFORMED_TRADE_DATE = "MALFORMED_TRADE_DATE"
-    UNREPAIRABLE_TRADE_DATE = "UNREPAIRABLE_TRADE_DATE"
-    TRADE_DATE_AFTER_SETTLE_DATE = "TRADE_DATE_AFTER_SETTLE_DATE"
-    NEGATIVE_QUANTITY_WITH_DIRECTION = "NEGATIVE_QUANTITY_WITH_DIRECTION"
-    MISSING_SETTLE_DATE = "MISSING_SETTLE_DATE"
-
-    # Settlement-state defects, detected while building positions.
-    SETTLED_TRADE_MARKED_LIVE = "SETTLED_TRADE_MARKED_LIVE"
-    SETTLEMENT_STATE_UNKNOWN = "SETTLEMENT_STATE_UNKNOWN"
-    TERM_FX_SETTLE_BEFORE_MATURITY = "TERM_FX_SETTLE_BEFORE_MATURITY"
-
-
-class DataQualityIssue(BaseModel):
-    """One finding, with the treatment that was applied to it."""
-
-    code: IssueCode
-    severity: Severity
-    entity_type: str
-    entity_id: str
-    detail: str
-    treatment: str
 
 
 class CleanedBlotter(NamedTuple):
@@ -332,5 +290,4 @@ def clean_trades(raw: pd.DataFrame) -> CleanedBlotter:
 
     df = df.drop(columns=["trade_date_raw"]).reset_index(drop=True)
 
-    issues.sort(key=lambda issue: (issue.code.value, issue.entity_id))
-    return CleanedBlotter(trades=df, issues=issues)
+    return CleanedBlotter(trades=df, issues=merge(issues))

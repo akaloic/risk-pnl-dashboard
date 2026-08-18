@@ -5,7 +5,8 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from app.dq import IssueCode, Severity, clean_trades
+from app.dq import clean_trades
+from app.issues import IssueCode, Severity
 from app.loaders import load_trades_raw, to_records
 from app.positions import Position, PositionStatus, build_positions
 

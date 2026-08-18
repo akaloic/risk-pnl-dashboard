@@ -25,7 +25,7 @@ import pandas as pd
 from pydantic import BaseModel
 
 from app.config import AS_OF_DATE
-from app.dq import DataQualityIssue, IssueCode, Severity
+from app.issues import DataQualityIssue, IssueCode, Severity, merge
 from app.models import AssetClass, ProductType
 
 # Products whose economics end at settlement, with the field that closes them.
@@ -252,5 +252,4 @@ def build_positions(trades: pd.DataFrame, as_of: date = AS_OF_DATE) -> PositionB
         .reset_index(drop=True)
     )
 
-    issues.sort(key=lambda issue: (issue.code.value, issue.entity_id))
-    return PositionBook(positions=grouped, issues=issues)
+    return PositionBook(positions=grouped, issues=merge(issues))
