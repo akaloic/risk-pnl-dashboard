@@ -11,8 +11,12 @@ from app.risk import aggregate_risk, risk_by_tenor, tenor_bucket
 AS_OF = date(2026, 8, 5)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def data():
+    # Function-scoped on purpose. The autouse fixture in conftest that redirects
+    # RAD_DATA_DIR at tests/fixtures/ is function-scoped too, and a module-scoped
+    # dataset here would be built before it runs -- reaching for the real
+    # extracts and failing on a fresh clone that has none.
     return load_dataset()
 
 
@@ -62,6 +66,7 @@ def test_the_split_adds_back_to_the_book_grid(data):
     split = by_tenor.groupby(["book_id", "risk_metric"])["open_usd"].sum()
     grid = by_book.set_index(["book_id", "risk_metric"])["open_usd"]
 
+    assert not split.empty
     for key, total in split.items():
         assert total == pytest.approx(grid[key], abs=0.01)
 
@@ -79,8 +84,9 @@ def test_buckets_come_back_in_curve_order_not_alphabetical(data):
 def test_settled_risk_is_absent_from_the_curve(data):
     """Settled exposure is a data quality finding, not a point on the curve.
 
-    It stays visible in the book grid's settled column; asking where on the
-    curve a position sits that has already paid has no answer.
+    FIX-008 is an FX spot that settled on 2026-07-29 and whose delta the risk
+    file still publishes. It stays visible in the book grid's settled column;
+    asking where on the curve it sits has no answer.
     """
     by_tenor = risk_by_tenor(data, as_of=AS_OF)
     by_book = aggregate_risk(data, as_of=AS_OF)
@@ -94,29 +100,28 @@ def test_duration_is_excluded_because_it_cannot_be_added(data):
     assert "Duration" not in set(risk_by_tenor(data, as_of=AS_OF)["risk_metric"])
 
 
-def test_the_rates_book_shows_a_curve_position_the_total_hides(data):
-    """The reason this view exists, pinned on the real extract.
+def test_one_metric_spreads_across_the_buckets_its_trades_mature_in(data):
+    """The reason the view exists: a single total covers several points.
 
-    RATES-ASIA-01 is short the front and belly and long the 5-10Y point. The
-    book-level DV01 is one number that says none of that.
+    Delta_USD in the fixtures spans a matured spot and a run of trades inside
+    the year, and the book grid reports the two as one number.
     """
-    rates = risk_by_tenor(data, as_of=AS_OF)
-    rates = rates[(rates["book_id"] == "RATES-ASIA-01") & (rates["risk_metric"] == "DV01")]
-    by_bucket = dict(zip(rates["tenor_bucket"], rates["open_usd"], strict=True))
+    delta = risk_by_tenor(data, as_of=AS_OF)
+    delta = delta[delta["risk_metric"] == "Delta_USD"]
 
-    assert by_bucket["5-10Y"] > 0
-    assert by_bucket["3-5Y"] < 0
-    assert min(by_bucket.values()) < 0 < max(by_bucket.values())
+    assert len(delta) > 1
+    assert set(delta["tenor_bucket"]) == {"Matured", "0-1Y"}
 
 
 def test_an_unconfirmed_settlement_surfaces_as_matured_risk(data):
-    """TRD-027 is deliberately left open, and the curve view says so.
+    """FIX-007 mirrors TRD-027: maturity passed, settle_date blank.
 
-    The README escalates it as overstating open FX delta by 12.0m USD. That is
-    exactly what lands in Matured, which is the point of keeping the bucket.
+    The documented rule keys on settle_date and cannot retire it, so it is
+    deliberately left open -- and open risk on a matured trade is precisely
+    what the Matured bucket exists to make visible rather than round away.
     """
     by_tenor = risk_by_tenor(data, as_of=AS_OF)
     matured = by_tenor[by_tenor["tenor_bucket"] == "Matured"]
 
-    assert set(matured["book_id"]) == {"FX-ASIA-01"}
-    assert matured["open_usd"].sum() == pytest.approx(12_000_000.0, abs=1.0)
+    assert list(matured["risk_metric"]) == ["Delta_USD"]
+    assert matured["open_usd"].sum() == pytest.approx(3_000_000.0, abs=1.0)
