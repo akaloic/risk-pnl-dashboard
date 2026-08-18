@@ -9,6 +9,11 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "ARG", "RET", "C4"]
 # third-party packages and the import blocks come out in the wrong order.
 known-first-party = ["app"]
 
+[lint.flake8-bugbear]
+# Depends() and Query() in argument defaults is how FastAPI declares
+# dependencies and query parameters; B008 would flag every route.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+
 [lint.per-file-ignores]
 # The pricers share one signature so they can sit behind a single registry;
 # the ones with nothing to look up still take the inputs argument.
