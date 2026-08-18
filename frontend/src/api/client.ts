@@ -32,7 +32,7 @@ export class ApiError extends Error {
 
 async function get<T>(path: string, date?: string): Promise<T> {
   const url = new URL(path, BASE_URL);
-  if (date) url.searchParams.set("date", date);
+  if (date) url.searchParams.set("as_of", date);
 
   let response: Response;
   try {

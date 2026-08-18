@@ -63,13 +63,22 @@ def reset_dataset_cache() -> None:
 
 
 def valuation_date(
-    date_: date | None = Query(
+    as_of: date | None = Query(
         None,
-        alias="date",
+        alias="as_of",
         description="Business day to value on. Defaults to the reference as-of date.",
     ),
 ) -> date:
-    return date_ or AS_OF_DATE
+    """The one date every endpoint reads, named the same as the engines' own.
+
+    The alias is `as_of` rather than `date` so that the 400 an engine raises --
+    "as_of=2030-01-01 is not a day this extract prices" -- names the parameter
+    the caller actually sent. FastAPI ignores query parameters it does not
+    know, so a caller who retries with the name the error suggested would
+    otherwise get the default date back and no indication anything was wrong.
+    Every response echoes `as_of`, which is the check that this landed.
+    """
+    return as_of or AS_OF_DATE
 
 
 class Health(BaseModel):

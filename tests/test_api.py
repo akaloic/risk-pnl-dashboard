@@ -72,8 +72,8 @@ def test_positions_expose_settlement_state(client):
 
 def test_positions_replay_an_earlier_date(client):
     """The same endpoint has to answer for any business day of the month."""
-    august = client.get("/positions", params={"date": AS_OF}).json()
-    july = client.get("/positions", params={"date": "2026-07-02"}).json()
+    august = client.get("/positions", params={"as_of": AS_OF}).json()
+    july = client.get("/positions", params={"as_of": "2026-07-02"}).json()
 
     assert len(july) < len(august)
 
@@ -102,7 +102,7 @@ def test_pnl_series_and_cards_agree(client):
 
 def test_pnl_is_replayable_over_the_month(client):
     """Valuing an earlier day returns a shorter series ending on that day."""
-    body = client.get("/pnl", params={"date": "2026-07-30"}).json()
+    body = client.get("/pnl", params={"as_of": "2026-07-30"}).json()
 
     assert body["as_of"] == "2026-07-30"
     assert max(row["date"] for row in body["series"]) == "2026-07-30"
@@ -189,14 +189,27 @@ def test_reconciliation_reports_coverage_and_findings(client, data):
 
 def test_an_unpublished_date_is_a_client_error_with_an_explanation(client):
     """A weekend is the caller's mistake, and the message names the range."""
-    response = client.get("/pnl", params={"date": "2026-08-08"})
+    response = client.get("/pnl", params={"as_of": "2026-08-08"})
 
     assert response.status_code == 400
     assert "business day" in response.json()["detail"]
 
 
 def test_a_malformed_date_is_rejected(client):
-    assert client.get("/positions", params={"date": "not-a-date"}).status_code == 422
+    assert client.get("/positions", params={"as_of": "not-a-date"}).status_code == 422
+
+
+def test_the_rejection_names_the_parameter_the_caller_can_retry_with(client):
+    """The 400 has to name the query parameter, not the engines' internal one.
+
+    FastAPI drops query parameters it does not recognise, so an error naming a
+    parameter the route does not accept sends the caller to a name that is
+    silently ignored -- they get the default date back and nothing says so.
+    """
+    detail = client.get("/pnl", params={"as_of": "2030-01-01"}).json()["detail"]
+    parameter = detail.split("=")[0]
+
+    assert client.get("/pnl", params={parameter: "2026-07-30"}).json()["as_of"] == "2026-07-30"
 
 
 def test_responses_carry_no_nan(client):
