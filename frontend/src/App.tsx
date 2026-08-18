@@ -1,14 +1,24 @@
 import { useCallback, useState } from "react";
 import { api } from "./api/client";
+import { DataQualityPanel } from "./components/DataQualityPanel";
 import { DeskSummary } from "./components/DeskSummary";
 import { Loadable } from "./components/Loading";
 import { PnlChart } from "./components/PnlChart";
 import { PositionsTable } from "./components/PositionsTable";
+import { Reconciliation } from "./components/Reconciliation";
+import { RiskGrid } from "./components/RiskGrid";
 import { useEndpoint } from "./hooks/useEndpoint";
 
 const DEFAULT_AS_OF = "2026-08-05";
 
-type Tab = "summary" | "positions";
+type Tab = "summary" | "positions" | "risk" | "quality";
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: "summary", label: "Desk summary" },
+  { id: "positions", label: "Positions" },
+  { id: "risk", label: "Risk" },
+  { id: "quality", label: "Data quality" },
+];
 
 export default function App() {
   const [asOf, setAsOf] = useState(DEFAULT_AS_OF);
@@ -18,6 +28,11 @@ export default function App() {
   const health = useEndpoint(() => api.health(), []);
   const pnl = useEndpoint(useCallback(() => api.pnl(asOf), [asOf]), [asOf]);
   const positions = useEndpoint(useCallback(() => api.positions(asOf), [asOf]), [asOf]);
+  const risk = useEndpoint(useCallback(() => api.risk(asOf), [asOf]), [asOf]);
+  const quality = useEndpoint(useCallback(() => api.dataQuality(asOf), [asOf]), [asOf]);
+  const recon = useEndpoint(useCallback(() => api.reconciliation(asOf), [asOf]), [asOf]);
+
+  const errorCount = quality.data?.counts.ERROR ?? 0;
 
   return (
     <>
@@ -43,16 +58,19 @@ export default function App() {
       </header>
 
       <nav className="tabs">
-        <button type="button" aria-selected={tab === "summary"} onClick={() => setTab("summary")}>
-          Desk summary
-        </button>
-        <button
-          type="button"
-          aria-selected={tab === "positions"}
-          onClick={() => setTab("positions")}
-        >
-          Positions
-        </button>
+        {TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+          >
+            {label}
+            {id === "quality" && errorCount > 0 && (
+              <span className="badge">{errorCount}</span>
+            )}
+          </button>
+        ))}
       </nav>
 
       {tab === "summary" && (
@@ -91,6 +109,27 @@ export default function App() {
         >
           {positions.data && <PositionsTable positions={positions.data} />}
         </Loadable>
+      )}
+
+      {tab === "risk" && (
+        <Loadable loading={risk.loading} error={risk.error} onRetry={risk.reload}>
+          {risk.data && <RiskGrid risk={risk.data} />}
+        </Loadable>
+      )}
+
+      {tab === "quality" && (
+        <>
+          <Loadable
+            loading={quality.loading}
+            error={quality.error}
+            onRetry={quality.reload}
+          >
+            {quality.data && <DataQualityPanel quality={quality.data} />}
+          </Loadable>
+          <Loadable loading={recon.loading} error={recon.error} onRetry={recon.reload}>
+            {recon.data && <Reconciliation recon={recon.data} />}
+          </Loadable>
+        </>
       )}
     </>
   );
