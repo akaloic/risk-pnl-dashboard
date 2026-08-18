@@ -301,3 +301,62 @@ input[type="checkbox"] {
   accent-color: var(--accent);
   vertical-align: -1px;
 }
+
+/* Book cards are buttons: the question after "how much" is "from what". */
+.card.clickable {
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+
+.card.clickable:hover {
+  border-color: #3d4b5a;
+  background: var(--panel-2);
+}
+
+.card.clickable.selected {
+  border-color: var(--accent);
+}
+
+.card .drill {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-head .close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.panel-head .close:hover { color: var(--text); }
+
+tfoot td {
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 18px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  flex-wrap: wrap;
+}

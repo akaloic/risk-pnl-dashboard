@@ -5,6 +5,7 @@ import { DeskSummary } from "./components/DeskSummary";
 import { Loadable } from "./components/Loading";
 import { PnlChart } from "./components/PnlChart";
 import { PositionsTable } from "./components/PositionsTable";
+import { TradeDetail } from "./components/TradeDetail";
 import { Reconciliation } from "./components/Reconciliation";
 import { RiskGrid } from "./components/RiskGrid";
 import { useEndpoint } from "./hooks/useEndpoint";
@@ -24,6 +25,7 @@ export default function App() {
   const [asOf, setAsOf] = useState(DEFAULT_AS_OF);
   const [tab, setTab] = useState<Tab>("summary");
   const [book, setBook] = useState<string | null>(null);
+  const [drill, setDrill] = useState<string | null>(null);
 
   const health = useEndpoint(() => api.health(), []);
   const pnl = useEndpoint(useCallback(() => api.pnl(asOf), [asOf]), [asOf]);
@@ -52,7 +54,10 @@ export default function App() {
             value={asOf}
             min={health.data?.first_business_day}
             max={health.data?.last_business_day}
-            onChange={(event) => setAsOf(event.target.value)}
+            onChange={(event) => {
+              setAsOf(event.target.value);
+              setDrill(null);
+            }}
           />
         </label>
       </header>
@@ -82,7 +87,18 @@ export default function App() {
         >
           {pnl.data && (
             <>
-              <DeskSummary pnl={pnl.data} />
+              <DeskSummary pnl={pnl.data} selected={drill} onSelect={setDrill} />
+              {drill && (
+                <TradeDetail
+                  book={drill}
+                  asOf={asOf}
+                  expected={
+                    pnl.data.by_book.find((entry) => entry.book_id === drill)
+                      ?.inception_usd ?? 0
+                  }
+                  onClose={() => setDrill(null)}
+                />
+              )}
               <div className="panel">
                 <h2>Daily P&amp;L</h2>
                 <p className="hint">

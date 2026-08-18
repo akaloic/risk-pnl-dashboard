@@ -2,40 +2,26 @@
  * The morning screen: where each book stands, and what moved overnight.
  *
  * The day figure leads because that is the question asked first; the position
- * since inception sits under it for context.
+ * since inception sits under it for context. Book cards are buttons: the next
+ * question after "how much" is always "from what", and the answer is one click
+ * away rather than in another tool.
  */
 
 import type { BookSummary, PnLResponse } from "../api/types";
 import { plain, signOf, usd } from "../lib/format";
 
-function Card({ title, day, inception, footer }: {
-  title: string;
-  day: number;
-  inception: number;
-  footer?: React.ReactNode;
-}) {
-  return (
-    <div className="card">
-      <h3>{title}</h3>
-      <div className={`headline ${signOf(day)}`}>{usd(day)}</div>
-      <div className="label">P&amp;L today</div>
-      <div className="row">
-        <span>Since inception</span>
-        <span className={`num ${signOf(inception)}`}>{usd(inception)}</span>
-      </div>
-      {footer}
-    </div>
-  );
+interface Props {
+  pnl: PnLResponse;
+  selected: string | null;
+  onSelect: (book: string | null) => void;
 }
 
-export function DeskSummary({ pnl }: { pnl: PnLResponse }) {
+export function DeskSummary({ pnl, selected, onSelect }: Props) {
   return (
     <div className="cards">
       <div className="card total">
         <h3>DESK TOTAL</h3>
-        <div className={`headline ${signOf(pnl.total_day_usd)}`}>
-          {usd(pnl.total_day_usd)}
-        </div>
+        <div className={`headline ${signOf(pnl.total_day_usd)}`}>{usd(pnl.total_day_usd)}</div>
         <div className="label">P&amp;L today &middot; {pnl.reporting_currency}</div>
         <div className="row">
           <span>Since inception</span>
@@ -46,18 +32,30 @@ export function DeskSummary({ pnl }: { pnl: PnLResponse }) {
       </div>
 
       {pnl.by_book.map((book: BookSummary) => (
-        <Card
+        <button
           key={book.book_id}
-          title={book.book_id}
-          day={book.day_usd}
-          inception={book.inception_usd}
-          footer={
-            <div className="row">
-              <span>{plain(book.trade_count)} trades</span>
-              <span>{plain(book.open_positions)} open positions</span>
-            </div>
-          }
-        />
+          type="button"
+          className={`card clickable${selected === book.book_id ? " selected" : ""}`}
+          onClick={() => onSelect(selected === book.book_id ? null : book.book_id)}
+          aria-expanded={selected === book.book_id}
+        >
+          <h3>{book.book_id}</h3>
+          <div className={`headline ${signOf(book.day_usd)}`}>{usd(book.day_usd)}</div>
+          <div className="label">P&amp;L today</div>
+          <div className="row">
+            <span>Since inception</span>
+            <span className={`num ${signOf(book.inception_usd)}`}>
+              {usd(book.inception_usd)}
+            </span>
+          </div>
+          <div className="row">
+            <span>{plain(book.trade_count)} trades</span>
+            <span>{plain(book.open_positions)} open positions</span>
+          </div>
+          <div className="drill">
+            {selected === book.book_id ? "Hide trades" : "Show trades →"}
+          </div>
+        </button>
       ))}
     </div>
   );
