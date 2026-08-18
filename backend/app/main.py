@@ -152,8 +152,10 @@ def pnl(
     as_of: date = Depends(valuation_date),
     data: Dataset = Depends(get_dataset),
 ) -> PnLResponse:
-    summary = _guard(lambda: desk_summary(data, as_of=as_of))
+    # The month is replayed once and reused: the cards and the chart are the
+    # same figures, and building the series twice doubled this route's work.
     series, _ = _guard(lambda: daily_pnl_series(data, as_of=as_of))
+    summary = _guard(lambda: desk_summary(data, as_of=as_of, series=series))
 
     return PnLResponse(
         as_of=as_of,

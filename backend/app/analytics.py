@@ -124,13 +124,21 @@ def daily_pnl_series(
     )
 
 
-def desk_summary(data: Dataset, as_of: date = AS_OF_DATE) -> pd.DataFrame:
+def desk_summary(
+    data: Dataset,
+    as_of: date = AS_OF_DATE,
+    series: pd.DataFrame | None = None,
+) -> pd.DataFrame:
     """One row per book: today's move, the position since inception, and size.
 
     Both P&L figures are read off the same series that feeds the chart, so a
-    card and the line above it cannot tell different stories.
+    card and the line above it cannot tell different stories. Callers that have
+    already built the series pass it in: the summary and the chart are usually
+    wanted together, and replaying the month twice to serve one screen is pure
+    waste.
     """
-    series, _ = daily_pnl_series(data, as_of=as_of)
+    if series is None:
+        series, _ = daily_pnl_series(data, as_of=as_of)
     latest = series[series["date"] == as_of].set_index("book_id")
 
     inception = compute_pnl(data, as_of=as_of).trades
