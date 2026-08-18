@@ -1,0 +1,27 @@
+# Confidential source extracts -- never commit these.
+# Only hand-written fixtures under tests/fixtures/ are allowed in the repo.
+data/*.csv
+data/README_datasets.txt
+
+# Confidential exercise brief -- marked "do not distribute".
+/Exercise_Brief.html
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
