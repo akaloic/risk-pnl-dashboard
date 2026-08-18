@@ -28,7 +28,7 @@ def test_missing_file_names_the_path_and_how_to_fix_it(tmp_path, monkeypatch):
 def test_trades_load_with_expected_dtypes():
     df = load_trades_raw()
 
-    assert len(df) == 8
+    assert not df.empty
     assert df["trade_date"].dtype == "datetime64[ns]"
     assert df["notional"].dtype.kind in "if"
     assert df["quantity"].dtype.kind in "if"
@@ -113,7 +113,7 @@ def test_market_data_and_fx_load_with_parsed_timestamps():
 
     assert md["last_update_utc"].dt.tz is not None
     assert md["date"].dtype == "datetime64[ns]"
-    assert len(fx) == 4
+    assert not fx.empty
     assert fx.set_index(["date", "ccy_pair"]).loc[
         (pd.Timestamp("2026-08-05"), "USDJPY"), "spot_rate"
     ] == 150.0

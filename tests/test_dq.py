@@ -33,10 +33,14 @@ def test_exact_duplicate_row_is_dropped_once(cleaned):
 
 
 def test_duplicate_removal_keeps_every_other_trade(cleaned):
-    """Dedupe must not swallow legitimate rows: 8 raw rows, 1 duplicate."""
-    assert len(load_trades_raw()) == 8
-    assert len(cleaned.trades) == 7
+    """Dedupe must drop exactly the duplicate rows and nothing else."""
+    raw = load_trades_raw()
+    duplicate_count = int(raw.duplicated().sum())
+
+    assert duplicate_count == 1
+    assert len(cleaned.trades) == len(raw) - duplicate_count
     assert cleaned.trades["trade_id"].is_unique
+    assert set(cleaned.trades["trade_id"]) == set(raw["trade_id"])
 
 
 def test_duplicate_would_otherwise_double_the_position():

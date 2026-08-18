@@ -38,6 +38,7 @@ class Severity(str, Enum):
 
 
 class IssueCode(str, Enum):
+    # Blotter-level defects, detected while cleaning the trade file.
     DUPLICATE_TRADE_ROW = "DUPLICATE_TRADE_ROW"
     CONFLICTING_TRADE_ROW = "CONFLICTING_TRADE_ROW"
     MALFORMED_TRADE_DATE = "MALFORMED_TRADE_DATE"
@@ -45,6 +46,11 @@ class IssueCode(str, Enum):
     TRADE_DATE_AFTER_SETTLE_DATE = "TRADE_DATE_AFTER_SETTLE_DATE"
     NEGATIVE_QUANTITY_WITH_DIRECTION = "NEGATIVE_QUANTITY_WITH_DIRECTION"
     MISSING_SETTLE_DATE = "MISSING_SETTLE_DATE"
+
+    # Settlement-state defects, detected while building positions.
+    SETTLED_TRADE_MARKED_LIVE = "SETTLED_TRADE_MARKED_LIVE"
+    SETTLEMENT_STATE_UNKNOWN = "SETTLEMENT_STATE_UNKNOWN"
+    TERM_FX_SETTLE_BEFORE_MATURITY = "TERM_FX_SETTLE_BEFORE_MATURITY"
 
 
 class DataQualityIssue(BaseModel):
