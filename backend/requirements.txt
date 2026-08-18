@@ -1,3 +1,6 @@
+# Requires Python 3.11-3.13. Pydantic 2.10 has no pydantic-core wheel for
+# 3.14 yet and falls back to a Rust build that fails, so pin the interpreter
+# rather than let a colleague hit a compiler error on first install.
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pandas==2.2.3

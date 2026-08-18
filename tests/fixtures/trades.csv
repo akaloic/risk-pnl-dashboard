@@ -1,0 +1,5 @@
+trade_id,book_id,trader_id,trade_date,settle_date,asset_class,product_type,instrument_id,instrument_description,currency,notional,quantity,trade_price,direction,counterparty_id,counterparty_name,status,maturity_date,bloomberg_id,internal_ref
+FIX-001,RATES-TEST-01,TDR-T-01,2026-07-01,2026-07-03,RATES,GOVT_BOND,TST-BOND-2030,Test Govt Bond 2.0% 2030,JPY,1000000000,10000,100.00,BUY,CPTY-T1,Test Bank A,LIVE,2030-06-30,,REF-T-0001
+FIX-002,RATES-TEST-01,TDR-T-01,2026-07-02,2026-07-06,RATES,IRS,TST-IRS-5Y,Test IRS 5Y pay fixed,JPY,2000000000,1,1.00,PAY,CPTY-T2,Test Bank B,LIVE,2031-07-06,,REF-T-0002
+FIX-003,FX-TEST-01,TDR-T-02,07/28/2026,2026-08-27,FX,FX_FORWARD,USDSGD,USDSGD 1M forward buy USD,USD,5000000,1,1.3400,BUY,CPTY-T3,Test Bank C,LIVE,2026-08-27,,REF-T-0003
+FIX-004,EQD-TEST-01,TDR-T-03,2026-07-20,2026-07-22,EQUITY,EQ_FUTURE,NKY-FUT-2026-09,Nikkei 225 Future Sep26,JPY,0,10,38000.00,BUY,CPTY-T4,Test Bank D,LIVE,2026-09-11,,REF-T-0004
