@@ -191,6 +191,15 @@ value must be rechecked before it is used against real KOSPI risk.
 
 Deliberate, given this is a prototype:
 
+- **FX forwards and NDFs are marked on spot.** `fx_rates.csv` carries one
+  `spot_rate` per pair per day and nothing else — no forward points, no tenor
+  curve — so the rate differential between the two legs cannot be marked and
+  is absent from the figure. Six term trades are valued this way and they
+  carry **267k USD, about 60% of the desk total**, which is why this is the
+  first limitation listed rather than a footnote. The error is the *change* in
+  the forward points over the holding period, not the points themselves: both
+  the reference and the current level are spot, so carry that does not move
+  cancels. Closing it needs a forward curve the extract does not contain.
 - No database, no auth, no Docker. Two commands to run is the point.
 - Pricing iterates row-wise rather than vectorised. At 40 trades over 24 days
   the cost is invisible, and five readable pricing functions are worth more

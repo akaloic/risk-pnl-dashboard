@@ -197,7 +197,22 @@ def _price_cds(trade: pd.Series, move: float, inputs: _Inputs) -> tuple[float, s
 
 
 def _price_fx(trade: pd.Series, move: float, inputs: _Inputs) -> tuple[float, str]:
-    """P&L on an FX trade accrues in the quote currency of the pair."""
+    """P&L on an FX trade accrues in the quote currency of the pair.
+
+    Forwards and NDFs are marked on the same spot move as a spot trade, which
+    is an approximation and the largest one in this engine. fx_rates.csv
+    carries a single `spot_rate` per pair per day -- no forward points, no
+    tenor curve -- so the interest-rate differential between the two legs
+    cannot be marked and is simply absent from the figure. Six term trades are
+    valued this way and they carry 267k USD, around 60% of the desk's total,
+    so the size of what is missing deserves stating rather than burying.
+
+    The error is the change in the forward points over the holding period, not
+    the points themselves: both the reference and the current level are spot,
+    so a parallel carry that does not move cancels out. It is bounded by the
+    rate differential on pairs like USDKRW and USDCNH, and closing it needs a
+    forward curve the extract does not contain.
+    """
     quote_ccy = inputs.quote_currency(trade["instrument_id"])
     return move * trade["notional"] * trade["direction_sign"], quote_ccy
 
