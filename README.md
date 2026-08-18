@@ -10,10 +10,11 @@ whole month from 2026-07-03 can be replayed day by day.
 
 ## Running it
 
-**Requirements:** Python 3.11–3.13 and Node 18+.
+**Requirements:** Python 3.11–3.14 and Node 18+.
 
-> Python 3.14 does not work: pydantic 2.10 has no wheel for it yet and falls
-> back to a Rust build that fails.
+> Every pinned dependency ships a wheel across that whole range, so the install
+> never falls back to a compiler. The floor is set by pandas 3.0, which is the
+> only branch with 3.14 wheels and needs 3.11 or newer itself.
 
 Drop the four extracts into `data/` — they are gitignored and never committed:
 

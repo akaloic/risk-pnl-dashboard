@@ -1,10 +1,11 @@
-# Requires Python 3.11-3.13. Pydantic 2.10 has no pydantic-core wheel for
-# 3.14 yet and falls back to a Rust build that fails, so pin the interpreter
-# rather than let a colleague hit a compiler error on first install.
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-pandas==2.2.3
-pydantic==2.10.4
+# Requires Python 3.11-3.14. Every pin below ships a wheel for all four, so a
+# first install never falls back to compiling Rust or C. pandas 3.0 is the
+# floor that sets the range: it is the only branch with 3.14 wheels, and it
+# needs 3.11 or newer itself.
+fastapi==0.141.1
+uvicorn[standard]==0.52.3
+pandas==3.0.5
+pydantic==2.13.4
 python-dateutil==2.9.0.post0
-pytest==8.3.4
+pytest==9.1.1
 httpx==0.28.1

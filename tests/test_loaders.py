@@ -29,7 +29,11 @@ def test_trades_load_with_expected_dtypes():
     df = load_trades_raw()
 
     assert not df.empty
-    assert df["trade_date"].dtype == "datetime64[ns]"
+    # Kind rather than an exact dtype: what matters is that the column parsed
+    # to a datetime, not the resolution pandas picked. pandas 3.0 reads these
+    # as datetime64[us] where 2.x gave [ns], and pinning the unit here would
+    # fail the suite on a new pandas while the loader is doing its job.
+    assert df["trade_date"].dtype.kind == "M"
     assert df["notional"].dtype.kind in "if"
     assert df["quantity"].dtype.kind in "if"
 
@@ -112,7 +116,7 @@ def test_market_data_and_fx_load_with_parsed_timestamps():
     fx = load_fx_rates_raw()
 
     assert md["last_update_utc"].dt.tz is not None
-    assert md["date"].dtype == "datetime64[ns]"
+    assert md["date"].dtype.kind == "M"
     assert not fx.empty
     assert (
         fx.set_index(["date", "ccy_pair"]).loc[(pd.Timestamp("2026-08-05"), "USDJPY"), "spot_rate"]
