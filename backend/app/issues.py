@@ -27,11 +27,14 @@ class Severity(str, Enum):
     # Genuine defect with a safe, deterministic treatment -- repaired, or
     # handled conservatively. Recorded so the source system still gets fixed.
     WARNING = "WARNING"
+    # Observed, understood and harmless. Recorded so that the next person to
+    # compare two files does not spend an afternoon rediscovering it.
+    INFO = "INFO"
 
 
 # Ordering used when the report is assembled: worst first, then stable by code
 # and entity so the panel and the tests never see a shuffled list.
-_SEVERITY_RANK = {Severity.ERROR: 0, Severity.WARNING: 1}
+_SEVERITY_RANK = {Severity.ERROR: 0, Severity.WARNING: 1, Severity.INFO: 2}
 
 
 class IssueCode(str, Enum):
@@ -52,6 +55,18 @@ class IssueCode(str, Enum):
     # Inputs the pricing engine needed and did not find.
     MISSING_MARKET_DATA = "MISSING_MARKET_DATA"
     MISSING_SENSITIVITY = "MISSING_SENSITIVITY"
+
+    # Market data and risk file quality.
+    STALE_QUOTE = "STALE_QUOTE"
+    IMPLAUSIBLE_DURATION = "IMPLAUSIBLE_DURATION"
+    QUOTE_WITHOUT_POSITION = "QUOTE_WITHOUT_POSITION"
+    PRICE_YIELD_INCOHERENT = "PRICE_YIELD_INCOHERENT"
+
+    # Blotter against risk file.
+    TRADE_WITHOUT_RISK = "TRADE_WITHOUT_RISK"
+    RISK_WITHOUT_TRADE = "RISK_WITHOUT_TRADE"
+    VALUE_USD_MISMATCH = "VALUE_USD_MISMATCH"
+    SETTLED_TRADE_CARRIES_RISK = "SETTLED_TRADE_CARRIES_RISK"
 
 
 class DataQualityIssue(BaseModel):

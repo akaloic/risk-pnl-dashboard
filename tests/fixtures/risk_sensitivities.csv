@@ -1,6 +1,6 @@
 as_of_date,trade_id,book_id,instrument_id,risk_metric,value,ccy,value_usd,unit,computation_timestamp,notes
 2026-08-05,FIX-001,RATES-TEST-01,TST-BOND-2030,DV01,100000.0,JPY,666.67,amount,2026-08-05T06:30:00Z,
-2026-08-05,FIX-001,RATES-TEST-01,TST-BOND-2030,Duration,4.5,JPY,4.5,years,2026-08-05T06:30:00Z,
+2026-08-05,FIX-001,RATES-TEST-01,TST-BOND-2030,Duration,3.5,JPY,3.5,years,2026-08-05T06:30:00Z,credible: under the 3.9y left to maturity
 2026-08-05,FIX-002,RATES-TEST-01,TST-IRS-5Y,DV01,-180000.0,JPY,-1200.00,amount,2026-08-05T06:30:00Z,
 2026-08-05,FIX-003,FX-TEST-01,USDSGD,DeltaUSD,5000000.0,USD,5000000.00,amount_usd,2026-08-05T06:30:00Z,underscore-less spelling on purpose
 2026-08-05,FIX-004,EQD-TEST-01,NKY-FUT-2026-09,Delta_USD,2566666.67,USD,2566666.67,amount_usd,2026-08-05T06:30:00Z,

@@ -253,3 +253,21 @@ def build_positions(trades: pd.DataFrame, as_of: date = AS_OF_DATE) -> PositionB
     )
 
     return PositionBook(positions=grouped, issues=merge(issues))
+
+
+def settled_trade_ids(trades: pd.DataFrame, as_of: date = AS_OF_DATE) -> set[str]:
+    """Trades whose economics had closed by `as_of`.
+
+    Lives here rather than in the risk and reconciliation modules that need it,
+    because both were deriving it from the position book in the same six lines.
+    Two copies of a settlement rule is one copy too many: it is exactly the kind
+    of logic that gets fixed in one place and left stale in the other.
+    """
+    book = build_positions(trades, as_of=as_of)
+    settled = book.positions["position_status"] == PositionStatus.SETTLED.value
+
+    return {
+        trade_id
+        for trade_ids in book.positions.loc[settled, "trade_ids"]
+        for trade_id in trade_ids
+    }
