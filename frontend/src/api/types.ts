@@ -85,9 +85,19 @@ export interface RiskAggregate {
   trade_count: number;
 }
 
+export interface TenorExposure {
+  book_id: string;
+  risk_metric: string;
+  tenor_bucket: string;
+  open_usd: number;
+  trade_count: number;
+}
+
 export interface RiskResponse {
   as_of: string;
   by_book: RiskAggregate[];
+  /** Already ordered along the curve by the backend, not alphabetically. */
+  by_tenor: TenorExposure[];
   per_trade_tenors: Record<string, unknown>[];
 }
 

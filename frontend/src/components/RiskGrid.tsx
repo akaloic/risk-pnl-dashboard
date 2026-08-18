@@ -11,11 +11,14 @@
  * is not a quantity that exists.
  */
 
+import { useMemo } from "react";
 import type { RiskResponse } from "../api/types";
 import { level, plain, signOf, usd } from "../lib/format";
+import { isCurvePosition, pivotByTenor } from "../lib/tenors";
 
 export function RiskGrid({ risk }: { risk: RiskResponse }) {
   const settledTotal = risk.by_book.reduce((sum, row) => sum + row.settled_usd, 0);
+  const curve = useMemo(() => pivotByTenor(risk.by_tenor), [risk.by_tenor]);
 
   return (
     <>
@@ -36,12 +39,12 @@ export function RiskGrid({ risk }: { risk: RiskResponse }) {
         <table>
           <thead>
             <tr>
-              <th>Book</th>
-              <th>Metric</th>
-              <th className="num">Open</th>
-              <th className="num">Settled</th>
-              <th className="num">Total published</th>
-              <th className="num">Trades</th>
+              <th scope="col">Book</th>
+              <th scope="col">Metric</th>
+              <th scope="col" className="num">Open</th>
+              <th scope="col" className="num">Settled</th>
+              <th scope="col" className="num">Total published</th>
+              <th scope="col" className="num">Trades</th>
             </tr>
           </thead>
           <tbody>
@@ -62,6 +65,59 @@ export function RiskGrid({ risk }: { risk: RiskResponse }) {
       </div>
 
       <div className="panel">
+        <h2>Open risk along the curve</h2>
+        <p className="hint">
+          The same open exposure, split by years to maturity. A book total says how
+          much a parallel shift is worth and nothing about where the position sits —
+          and a long against a short nets to almost nothing at book level while still
+          carrying the shape. Rows marked <span className="curve-flag">curve</span>{" "}
+          hold exposure on both sides of zero.
+        </p>
+
+        <div className="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Book</th>
+                <th scope="col">Metric</th>
+                {curve.buckets.map((bucket) => (
+                  <th scope="col" className="num" key={bucket}>
+                    {bucket}
+                  </th>
+                ))}
+                <th scope="col" className="num">
+                  Net
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {curve.rows.map((row) => (
+                <tr key={`${row.book}/${row.metric}`}>
+                  <th scope="row">{row.book}</th>
+                  <td>
+                    {row.metric}
+                    {isCurvePosition(row) && <span className="curve-flag">curve</span>}
+                  </td>
+                  {curve.buckets.map((bucket) => {
+                    const value = row.cells.get(bucket);
+                    return (
+                      <td
+                        key={bucket}
+                        className={`num ${value === undefined ? "flat" : signOf(value)}`}
+                      >
+                        {value === undefined ? "—" : usd(value)}
+                      </td>
+                    );
+                  })}
+                  <td className={`num ${signOf(row.total)}`}>{usd(row.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="panel">
         <h2>Tenors</h2>
         <p className="hint">
           Durations are reported per trade and never totalled. Several of these figures
@@ -71,12 +127,12 @@ export function RiskGrid({ risk }: { risk: RiskResponse }) {
           <table>
             <thead>
               <tr>
-                <th>Book</th>
-                <th>Trade</th>
-                <th>Instrument</th>
-                <th>Metric</th>
-                <th className="num">Value</th>
-                <th>Unit</th>
+                <th scope="col">Book</th>
+                <th scope="col">Trade</th>
+                <th scope="col">Instrument</th>
+                <th scope="col">Metric</th>
+                <th scope="col" className="num">Value</th>
+                <th scope="col">Unit</th>
               </tr>
             </thead>
             <tbody>

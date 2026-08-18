@@ -26,7 +26,13 @@ from app.pnl import TradePnL, compute_pnl
 from app.positions import Position, build_positions
 from app.reconciliation import coverage_summary, reconcile
 from app.report import full_quality_report, severity_counts
-from app.risk import RiskAggregate, aggregate_risk, non_additive_metrics
+from app.risk import (
+    RiskAggregate,
+    TenorExposure,
+    aggregate_risk,
+    non_additive_metrics,
+    risk_by_tenor,
+)
 
 app = FastAPI(
     title="Risk & P&L -- Asia cross-asset desk",
@@ -105,6 +111,7 @@ class PnLResponse(BaseModel):
 class RiskResponse(BaseModel):
     as_of: date
     by_book: list[RiskAggregate]
+    by_tenor: list[TenorExposure]
     per_trade_tenors: list[dict]
 
 
@@ -192,9 +199,11 @@ def risk(
     data: Dataset = Depends(get_dataset),
 ) -> RiskResponse:
     grid = _guard(lambda: aggregate_risk(data, as_of=as_of))
+    tenors = _guard(lambda: risk_by_tenor(data, as_of=as_of))
     return RiskResponse(
         as_of=as_of,
         by_book=[RiskAggregate.model_validate(row) for row in to_records(grid)],
+        by_tenor=[TenorExposure.model_validate(row) for row in to_records(tenors)],
         per_trade_tenors=to_records(non_additive_metrics(data)),
     )
 

@@ -48,16 +48,17 @@ source .venv/bin/activate && python -m pytest
 cd frontend && npm test
 ```
 
-159 backend tests and 22 on the front end, and they pass on a fresh clone
+178 backend tests and 30 on the front end, and they pass on a fresh clone
 **with no `data/` directory at all**: the suite runs against hand-written
 fixtures in `tests/fixtures/` that reproduce every quirk found in the real
 extracts. That is deliberate — the real files are confidential and are not in
 this repository.
 
-The frontend tests cover the pure logic only — axis scaling, formatting and the
-series aggregation — not the rendering. Those three are where a wrong answer is
-silent: a mis-scaled axis, a mis-grouped total and a mis-rounded figure all
-draw a chart that looks entirely normal.
+The frontend tests cover the pure logic only — axis scaling, formatting, the
+series aggregation and the curve pivot — not the rendering. Those four are
+where a wrong answer is silent: a mis-scaled axis, a mis-grouped total, a
+mis-rounded figure and a curve sorted `0-1Y, 10Y+, 1-3Y` all draw a screen that
+looks entirely normal.
 
 ---
 
@@ -67,7 +68,7 @@ draw a chart that looks entirely normal.
 |---|---|
 | **Desk summary** | Where does each book stand, and what moved overnight? Daily P&L chart over the month. |
 | **Positions** | What do we actually hold, netted by book and instrument, and what has settled? |
-| **Risk** | What are we exposed to, per book and metric — and how much of that exposure is real? |
+| **Risk** | What are we exposed to, per book and metric — how much of that exposure is real, and **where on the curve does it sit**? |
 | **Data quality** | What was wrong with the data, and what did the tool do about it? |
 
 ### Endpoints
@@ -75,9 +76,9 @@ draw a chart that looks entirely normal.
 `GET /health` · `/positions` · `/pnl` · `/pnl/trades` · `/risk` ·
 `/data-quality` · `/reconciliation`
 
-All except `/health` accept `?date=YYYY-MM-DD` to replay any published business
-day. A date the extract does not price returns **400** with the range it covers,
-rather than a partial answer.
+All except `/health` accept `?as_of=YYYY-MM-DD` to replay any published
+business day. A date the extract does not price returns **400** with the range
+it covers, rather than a partial answer.
 
 ---
 
@@ -127,6 +128,15 @@ wrong by a factor of 150. The direction is derived from the file's own
 **Pricing is a registry, not a conditional.** Five methods, five short
 functions behind a lookup on product type. Adding a product means adding a
 function.
+
+**Risk is reported along the curve, not just as a book total.** A book-level
+DV01 says what a parallel shift is worth and nothing about where the position
+sits, and it hides a curve trade completely — a long and a short of equal size
+net to almost nothing while carrying real exposure to the shape. RATES-ASIA-01
+is exactly that: a total of 6,442 USD that is actually short the front and the
+belly and long the 5-10Y point. Buckets come from each trade's own
+`maturity_date` rather than from parsing an instrument id, and their order is
+carried as data — sorted as text, `10Y+` lands between `0-1Y` and `1-3Y`.
 
 **Nothing is valued at an assumed level.** A missing price or sensitivity
 excludes the trade and raises an error rather than defaulting to zero or
