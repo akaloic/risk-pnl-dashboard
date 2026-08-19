@@ -144,7 +144,7 @@ body {
   background: var(--panel-2);
 }
 
-.card h3 {
+.card h2 {
   margin: 0 0 10px;
   font-size: 12px;
   font-weight: 600;
@@ -440,7 +440,7 @@ th button.sort:hover { color: var(--text); }
 .num.dominant.down { color: #ff7a80; }
 
 /* A badge sitting in a card heading rather than a table cell. */
-.card h3 .roll-flag {
+.card h2 .roll-flag {
   margin-left: 8px;
   text-transform: none;
   letter-spacing: 0;

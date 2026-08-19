@@ -28,7 +28,7 @@ export function DeskSummary({ pnl, tenors, selected, onSelect }: Props) {
   return (
     <div className="cards">
       <div className="card total">
-        <h3>DESK TOTAL</h3>
+        <h2>DESK TOTAL</h2>
         <div className={`headline ${signOf(pnl.total_day_usd)}`}>{usd(pnl.total_day_usd)}</div>
         <div className="label">P&amp;L today &middot; {pnl.reporting_currency}</div>
         <div className="row">
@@ -52,14 +52,14 @@ export function DeskSummary({ pnl, tenors, selected, onSelect }: Props) {
             rollingOff.has(book.book_id) ? ", all risk maturing within three months" : ""
           }: show the trades behind this book's P&L`}
         >
-          <h3>
+          <h2>
             {book.book_id}
             {rollingOff.has(book.book_id) && (
               <span className="roll-flag" title="Every risk metric on this book matures within three months">
                 rolls off ≤3M
               </span>
             )}
-          </h3>
+          </h2>
           <div className={`headline ${signOf(book.day_usd)}`}>{usd(book.day_usd)}</div>
           <div className="label">P&amp;L today</div>
           <div className="row">

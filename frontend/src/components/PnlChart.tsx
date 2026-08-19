@@ -9,6 +9,12 @@
  * Hand-drawn SVG rather than a charting library: the shape is simple enough
  * that a dependency would cost more than it saves, and the project stays at
  * two install steps.
+ *
+ * The chart carries meaning, so it is `role="img"` with an aria-label rather
+ * than left as decoration. That is the WAI-ARIA pattern for an inline graphic,
+ * and it is why jsx-a11y/prefer-tag-over-role is off in .oxlintrc.json: the
+ * rule wants an <img> tag instead, which would mean an external file, and this
+ * chart is drawn in the document with nothing to point one at.
  */
 
 import { useMemo, useState } from "react";

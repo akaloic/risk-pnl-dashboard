@@ -48,7 +48,7 @@ source .venv/bin/activate && python -m pytest
 cd frontend && npm test
 ```
 
-189 backend tests and 111 on the front end, and they pass on a fresh clone
+189 backend tests and 124 on the front end, and they pass on a fresh clone
 **with no `data/` directory at all**: the suite runs against hand-written
 fixtures in `tests/fixtures/` that reproduce every quirk found in the real
 extracts. That is deliberate — the real files are confidential and are not in
@@ -203,6 +203,19 @@ tomorrow. And the notional column has to be converted before it is compared:
 summed as it stands, mixing JPY, KRW and USD, KB Securities is 61% of the book
 and first by a distance; in USD it is 9.4% and sixth; by exposure it is 4.5%.
 Three questions, three orderings, and only one of them is a credit limit.
+
+**Accessibility is checked by a machine, because two careful readings were not
+enough.** `aria-selected` on plain buttons is invalid — the attribute is only
+allowed on a handful of roles — and it survived a deliberate accessibility pass
+here before being found by hand. Two layers now run on every `npm test`:
+oxlint's `jsx-a11y` rules read the source, and axe-core runs over what each of
+the nine components actually renders, which is where a role with no container,
+an `aria-controls` pointing at nothing, or a heading level that skips can only
+be seen. Turning it on immediately found two more: the chart's book filter was
+a combo box with no accessible name, and the summary cards jumped from `h1` to
+`h3`. One test in that file asserts the check still *fails* on a known-bad
+fragment — an assertion helper that quietly stops asserting passes every test
+it is in, and reads as evidence.
 
 **Nothing is valued at an assumed level.** A missing price or sensitivity
 excludes the trade and raises an error rather than defaulting to zero or

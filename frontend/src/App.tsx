@@ -143,6 +143,7 @@ export default function App() {
                 <p className="hint">
                   Bars are each day&rsquo;s move, the line is the running total.{" "}
                   <select
+                    aria-label="Filter the chart to one book"
                     value={book ?? ""}
                     onChange={(event) => setBook(event.target.value || null)}
                   >
