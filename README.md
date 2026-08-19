@@ -28,19 +28,20 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r backend/req
 cd frontend && npm install
 ```
 
-**Without the confidential extracts** — a synthetic desk lives in `demo-data/`,
-so the tool runs on a fresh clone with nothing else to obtain:
-
-```bash
-RAD_DATA_DIR=demo-data PYTHONPATH=backend uvicorn app.main:app --reload
-```
-
-**With the real extracts** — drop `trades.csv`, `market_data.csv`,
+**With the extracts** — drop `trades.csv`, `market_data.csv`,
 `risk_sensitivities.csv` and `fx_rates.csv` into `data/`. They are gitignored
 and never committed.
 
 ```bash
 PYTHONPATH=backend uvicorn app.main:app --reload
+```
+
+**Or on the demo desk.** `demo-data/` holds an invented one, which exists so
+the screenshots below can show a working screen without publishing a single
+real figure. It also means the app starts on a fresh clone:
+
+```bash
+RAD_DATA_DIR=demo-data PYTHONPATH=backend uvicorn app.main:app --reload
 ```
 
 Either way, start the screen with `cd frontend && npm run dev` and open
@@ -52,9 +53,11 @@ hand-written fixtures that reproduce the real quirks.
 
 ## What it looks like
 
-Every screenshot below is the demo desk, not the real one — invented books,
-invented counterparties. Regenerate with `python scripts/make_demo_data.py`
-and `scripts/take_screenshots.py`.
+All of them are the demo desk: invented books, invented counterparties, not one
+figure derived from the extracts. That is the point of `demo-data/` — the real
+screen names the counterparties the desk faces and what each owes, which is not
+something to commit. Regenerate with `scripts/make_demo_data.py` and
+`scripts/take_screenshots.py`.
 
 **Desk summary** — where each book stands, what moved overnight, and whether it
 is a position we still have. `rolls off ≤3M` marks a book whose every risk

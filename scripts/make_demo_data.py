@@ -1,10 +1,15 @@
-"""Generate a synthetic desk so the tool can be run without the real extracts.
+"""Generate a synthetic desk, so the screenshots can show one.
 
-The confidential files never enter this repository, which leaves anyone who
-clones it unable to start the app at all -- the tests run against fixtures, but
-the screens have nothing to draw. This writes a desk that is entirely invented
-and shaped like a real one: four books, forty trades across the five product
-classes, a month of business days, and the same column layout the extracts use.
+The README needs pictures -- a reader decides whether to run any of this in
+about ten seconds -- and a screenshot of the real screen names the
+counterparties the desk faces and what each of them owes. Those files are
+confidential, and a figure derived from them is no more publishable than the
+file itself. So the screens in the README are drawn from a desk that does not
+exist: four books, twenty-five trades across the five product classes, a month
+of business days, and the same column layout the extracts use.
+
+Starting on a fresh clone falls out of it, which is worth having but is not why
+this exists. Anyone reviewing this already has the extracts.
 
 It is deliberately not the test fixtures. Those are ten hand-written rows built
 to pin edge cases, and a screen drawn from them shows none of what the tool is
