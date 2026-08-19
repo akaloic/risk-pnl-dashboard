@@ -51,7 +51,7 @@ flowchart LR
   D["defect found"] --> Q{"repairable without<br/>guessing?"}
   Q -->|yes| R["repair, record the treatment"]
   Q -->|no| E["escalate untreated, record why"]
-  R --> P["Data quality panel"]
+  R --> P["DQ panel"]
   E --> P
 ```
 
