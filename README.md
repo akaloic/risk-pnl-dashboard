@@ -48,7 +48,7 @@ source .venv/bin/activate && python -m pytest
 cd frontend && npm test
 ```
 
-180 backend tests and 104 on the front end, and they pass on a fresh clone
+189 backend tests and 111 on the front end, and they pass on a fresh clone
 **with no `data/` directory at all**: the suite runs against hand-written
 fixtures in `tests/fixtures/` that reproduce every quirk found in the real
 extracts. That is deliberate — the real files are confidential and are not in
@@ -78,13 +78,13 @@ rather than replacing it with a status code.
 |---|---|
 | **Desk summary** | Where does each book stand, and what moved overnight? Daily P&L chart over the month. |
 | **Positions** | What do we actually hold, netted by book and instrument, and what has settled? |
-| **Risk** | What are we exposed to, per book and metric — how much of that exposure is real, and **where on the curve does it sit**? |
+| **Risk** | What are we exposed to, per book and metric — how much of that exposure is real, **where on the curve does it sit**, and **who are we facing**? |
 | **Data quality** | What was wrong with the data, and what did the tool do about it? |
 
 ### Endpoints
 
 `GET /health` · `/positions` · `/pnl` · `/pnl/trades` · `/risk` ·
-`/data-quality` · `/reconciliation`
+`/counterparty` · `/data-quality` · `/reconciliation`
 
 All except `/health` accept `?as_of=YYYY-MM-DD` to replay any published
 business day. A date the extract does not price returns **400** with the range
@@ -111,6 +111,7 @@ starting a web server.
 | `pnl` | Mark to market, one pricing method per product class. |
 | `analytics` | Replay the month; summarise per book. |
 | `risk` | Aggregate sensitivities by book and metric, and split them along the curve. |
+| `counterparty` | Rank the names the desk faces by what a default would cost. |
 | `checks` / `reconciliation` | Market data quality; blotter against risk file. |
 | `report` | Assemble every finding into one ordered report. |
 | `api` | Thin FastAPI layer over the engines. |
@@ -191,6 +192,17 @@ every risk metric on the book is near-term — on this extract, the equity
 derivatives and FX books. Counted per metric rather than summed across them:
 adding a book's Delta, DV01 and JTD to get "its near-term exposure" produces a
 number dominated by whichever metric is quoted in the largest units.
+
+**Counterparty exposure is not notional.** A ten million dollar forward against
+Citi is ten million of business and, on this extract, no credit risk at all: the
+trade is marked against the desk, so the name owes nothing and a default costs
+nothing. Exposure is the mark where it is positive and zero where it is not.
+Netting instead would report a relationship the desk is losing on as costing
+nothing to lose — Nomura nets to −149k and would still take 132k out of the desk
+tomorrow. And the notional column has to be converted before it is compared:
+summed as it stands, mixing JPY, KRW and USD, KB Securities is 61% of the book
+and first by a distance; in USD it is 9.4% and sixth; by exposure it is 4.5%.
+Three questions, three orderings, and only one of them is a credit limit.
 
 **Nothing is valued at an assumed level.** A missing price or sensitivity
 excludes the trade and raises an error rather than defaulting to zero or

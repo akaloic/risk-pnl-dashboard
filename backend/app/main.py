@@ -19,6 +19,7 @@ from pydantic import BaseModel
 
 from app.analytics import BookSummary, DailyPnL, daily_pnl_series, desk_summary
 from app.config import AS_OF_DATE, REPORTING_CCY
+from app.counterparty import CounterpartyExposure, exposure_by_counterparty
 from app.dataset import Dataset, load_dataset
 from app.issues import DataQualityIssue
 from app.loaders import to_records
@@ -206,6 +207,16 @@ def risk(
         by_tenor=[TenorExposure.model_validate(row) for row in to_records(tenors)],
         per_trade_tenors=to_records(non_additive_metrics(data)),
     )
+
+
+@app.get("/counterparty", response_model=list[CounterpartyExposure], tags=["desk"])
+def counterparty(
+    as_of: date = Depends(valuation_date),
+    data: Dataset = Depends(get_dataset),
+) -> list[CounterpartyExposure]:
+    """Who the desk faces, ranked by what a default would cost rather than size."""
+    grid = _guard(lambda: exposure_by_counterparty(data, as_of=as_of))
+    return [CounterpartyExposure.model_validate(row) for row in to_records(grid)]
 
 
 @app.get("/data-quality", response_model=DataQualityResponse, tags=["quality"])

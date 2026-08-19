@@ -101,6 +101,19 @@ export interface RiskResponse {
   per_trade_tenors: Record<string, unknown>[];
 }
 
+export interface CounterpartyExposure {
+  counterparty_id: string;
+  counterparty_name: string;
+  open_trades: number;
+  settled_trades: number;
+  books: number;
+  gross_notional_usd: number;
+  /** What a default would cost: the marks in the desk's favour, and no others. */
+  current_exposure_usd: number;
+  net_mtm_usd: number;
+  share_of_exposure_pct: number;
+}
+
 export interface DataQualityIssue {
   code: string;
   severity: Severity;

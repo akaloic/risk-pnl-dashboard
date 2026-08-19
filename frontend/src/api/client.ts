@@ -9,6 +9,7 @@
  */
 
 import type {
+  CounterpartyExposure,
   DataQualityResponse,
   Health,
   PnLResponse,
@@ -70,6 +71,7 @@ export const api = {
   pnl: (date?: string) => get<PnLResponse>("/pnl", date),
   pnlByTrade: (date?: string) => get<TradePnL[]>("/pnl/trades", date),
   risk: (date?: string) => get<RiskResponse>("/risk", date),
+  counterparty: (date?: string) => get<CounterpartyExposure[]>("/counterparty", date),
   dataQuality: (date?: string) => get<DataQualityResponse>("/data-quality", date),
   reconciliation: (date?: string) =>
     get<ReconciliationResponse>("/reconciliation", date),

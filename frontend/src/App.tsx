@@ -1,5 +1,6 @@
 import { type KeyboardEvent, useCallback, useRef, useState } from "react";
 import { api } from "./api/client";
+import { CounterpartyGrid } from "./components/CounterpartyGrid";
 import { DataQualityPanel } from "./components/DataQualityPanel";
 import { DeskSummary } from "./components/DeskSummary";
 import { Loadable } from "./components/Loading";
@@ -31,6 +32,7 @@ export default function App() {
   const pnl = useEndpoint(useCallback(() => api.pnl(asOf), [asOf]), [asOf]);
   const positions = useEndpoint(useCallback(() => api.positions(asOf), [asOf]), [asOf]);
   const risk = useEndpoint(useCallback(() => api.risk(asOf), [asOf]), [asOf]);
+  const counterparty = useEndpoint(useCallback(() => api.counterparty(asOf), [asOf]), [asOf]);
   const quality = useEndpoint(useCallback(() => api.dataQuality(asOf), [asOf]), [asOf]);
   const recon = useEndpoint(useCallback(() => api.reconciliation(asOf), [asOf]), [asOf]);
 
@@ -182,7 +184,15 @@ export default function App() {
           onRetry={risk.reload}
         >
           {risk.data && <RiskGrid risk={risk.data} />}
-        </Loadable>
+          </Loadable>
+          <Loadable
+            loading={counterparty.loading}
+            refreshing={counterparty.refreshing}
+            error={counterparty.error}
+            onRetry={counterparty.reload}
+          >
+            {counterparty.data && <CounterpartyGrid exposures={counterparty.data} />}
+          </Loadable>
         </div>
       )}
 
