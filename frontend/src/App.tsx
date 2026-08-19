@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { type KeyboardEvent, useCallback, useRef, useState } from "react";
 import { api } from "./api/client";
 import { DataQualityPanel } from "./components/DataQualityPanel";
 import { DeskSummary } from "./components/DeskSummary";
@@ -36,6 +36,25 @@ export default function App() {
 
   const errorCount = quality.data?.counts.ERROR ?? 0;
 
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  /** Arrows move between tabs and wrap; Home and End jump to the ends. */
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const moves: Record<string, number> = {
+      ArrowRight: index + 1,
+      ArrowLeft: index - 1,
+      Home: 0,
+      End: TABS.length - 1,
+    };
+    const target = moves[event.key];
+    if (target === undefined) return;
+
+    event.preventDefault();
+    const next = (target + TABS.length) % TABS.length;
+    setTab(TABS[next].id);
+    tabRefs.current[next]?.focus();
+  };
+
   return (
     <>
       <header className="app-header">
@@ -62,13 +81,25 @@ export default function App() {
         </label>
       </header>
 
-      <nav className="tabs">
-        {TABS.map(({ id, label }) => (
+      {/* The full tab pattern, not buttons wearing aria-selected: that attribute is
+          only valid on a handful of roles, and on a plain button a screen reader is
+          entitled to ignore it. Roving tabindex and arrow keys come with the pattern
+          -- Tab moves past the whole strip, arrows move within it. */}
+      <div className="tabs" role="tablist" aria-label="Desk views">
+        {TABS.map(({ id, label }, index) => (
           <button
             key={id}
             type="button"
+            role="tab"
+            id={`tab-${id}`}
+            aria-controls={`panel-${id}`}
             aria-selected={tab === id}
+            tabIndex={tab === id ? 0 : -1}
+            ref={(node) => {
+              tabRefs.current[index] = node;
+            }}
             onClick={() => setTab(id)}
+            onKeyDown={(event) => onTabKeyDown(event, index)}
           >
             {label}
             {id === "quality" && errorCount > 0 && (
@@ -76,9 +107,10 @@ export default function App() {
             )}
           </button>
         ))}
-      </nav>
+      </div>
 
       {tab === "summary" && (
+        <div role="tabpanel" id="panel-summary" aria-labelledby="tab-summary">
         <Loadable
           loading={pnl.loading}
           refreshing={pnl.refreshing}
@@ -120,9 +152,11 @@ export default function App() {
             </>
           )}
         </Loadable>
+        </div>
       )}
 
       {tab === "positions" && (
+        <div role="tabpanel" id="panel-positions" aria-labelledby="tab-positions">
         <Loadable
           loading={positions.loading}
           refreshing={positions.refreshing}
@@ -131,9 +165,11 @@ export default function App() {
         >
           {positions.data && <PositionsTable positions={positions.data} />}
         </Loadable>
+        </div>
       )}
 
       {tab === "risk" && (
+        <div role="tabpanel" id="panel-risk" aria-labelledby="tab-risk">
         <Loadable
           loading={risk.loading}
           refreshing={risk.refreshing}
@@ -142,10 +178,11 @@ export default function App() {
         >
           {risk.data && <RiskGrid risk={risk.data} />}
         </Loadable>
+        </div>
       )}
 
       {tab === "quality" && (
-        <>
+        <div role="tabpanel" id="panel-quality" aria-labelledby="tab-quality">
           <Loadable
             loading={quality.loading}
             refreshing={quality.refreshing}
@@ -162,7 +199,7 @@ export default function App() {
           >
             {recon.data && <Reconciliation recon={recon.data} />}
           </Loadable>
-        </>
+        </div>
       )}
     </>
   );
