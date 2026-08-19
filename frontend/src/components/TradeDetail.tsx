@@ -14,6 +14,7 @@ import { useCallback, useMemo } from "react";
 import { api } from "../api/client";
 import { useEndpoint } from "../hooks/useEndpoint";
 import { level, signOf, usd, usdPrecise } from "../lib/format";
+import { positionKey, positionsByInstrument } from "../lib/legs";
 import { Loadable } from "./Loading";
 
 interface Props {
@@ -37,6 +38,11 @@ export function TradeDetail({ book, asOf, expected, onClose }: Props) {
     [trades.data, book],
   );
 
+  // Which of these lines are legs of one instrument rather than positions in
+  // their own right. Sorting by size puts the legs of a hedged position at the
+  // top of the table looking like the two worst trades on the desk.
+  const positions = useMemo(() => positionsByInstrument(rows), [rows]);
+
   const total = rows.reduce((sum, row) => sum + row.pnl_usd, 0);
   const tiesOut = Math.abs(total - expected) < 0.01;
 
@@ -47,7 +53,8 @@ export function TradeDetail({ book, asOf, expected, onClose }: Props) {
           <h2>{book} — P&amp;L by trade</h2>
           <p className="hint">
             Since inception, largest contributor first. Levels are what each figure was
-            computed from.
+            computed from. Lines marked <span className="leg-flag">leg</span> share an
+            instrument with another trade and are one position, not two.
           </p>
         </div>
         <button type="button" className="close" onClick={onClose} aria-label="Close">
@@ -79,7 +86,17 @@ export function TradeDetail({ book, asOf, expected, onClose }: Props) {
               {rows.map((row) => (
                 <tr key={row.trade_id}>
                   <td>{row.trade_id}</td>
-                  <td>{row.instrument_id}</td>
+                  <td>
+                    {row.instrument_id}
+                    {(positions.get(positionKey(row))?.tradeIds.length ?? 0) > 1 && (
+                      <span
+                        className="leg-flag"
+                        title={`${positions.get(positionKey(row))?.tradeIds.join(" + ")} are one position on this instrument`}
+                      >
+                        leg · net {usd(positions.get(positionKey(row))?.net ?? 0)}
+                      </span>
+                    )}
+                  </td>
                   <td className="flat">{row.method}</td>
                   <td className="num">{level(row.reference_level)}</td>
                   <td className="num">{level(row.current_level)}</td>

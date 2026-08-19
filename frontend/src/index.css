@@ -402,3 +402,16 @@ th button.sort:hover { color: var(--text); }
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* A trade that shares its instrument with another: a leg, not a position. */
+.leg-flag {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  white-space: nowrap;
+  background: rgba(224, 163, 62, 0.12);
+  border: 1px solid rgba(224, 163, 62, 0.35);
+  color: var(--warning);
+}

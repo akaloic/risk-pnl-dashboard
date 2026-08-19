@@ -139,6 +139,13 @@ belly and long the 5-10Y point. Buckets come from each trade's own
 `maturity_date` rather than from parsing an instrument id, and their order is
 carried as data — sorted as text, `10Y+` lands between `0-1Y` and `1-3Y`.
 
+**A trade is not a position.** The P&L table sorts by size, so the two largest
+lines in EQD-ASIA-01 were TRD-034 at −113k and TRD-039 at +103k — both Nikkei
+September futures, one position netting to −10k. Read as separate rows, the
+worst line on the desk looked eleven times worse than it was. Trades sharing an
+instrument are now marked `leg` with the net beside them; on that book 8 of the
+10 rows are legs of 6 positions.
+
 **Nothing is valued at an assumed level.** A missing price or sensitivity
 excludes the trade and raises an error rather than defaulting to zero or
 carrying yesterday's number forward.
