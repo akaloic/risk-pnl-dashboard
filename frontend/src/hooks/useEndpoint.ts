@@ -51,7 +51,12 @@ export function useEndpoint<T>(fetcher: () => Promise<T>, deps: unknown[]): Endp
     return () => {
       current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // The dependency list is the caller's, spread in, plus the retry counter.
+    // `fetcher` is deliberately not in it: callers pass a fresh closure on
+    // every render, so depending on it would refetch in a loop. The caller
+    // declares what the fetch actually depends on, which is why every call
+    // site wraps its fetcher in useCallback with the same deps.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, attempt]);
 
   return {

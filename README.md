@@ -61,7 +61,7 @@ silent: a mis-scaled axis, a mis-grouped total, a curve sorted
 `0-3M, 10Y+, 1-3Y` and a hedged position read as two losing trades all draw a
 screen that looks entirely normal.
 
-All eight components are then rendered and driven, which is what stops a
+All nine components are then rendered and driven, which is what stops a
 correct function from being asked the wrong question. Those tests assert what
 the screen has to say rather than how it is built: that a badge claiming a book
 rolls off never appears on a book holding far-dated risk, that the two legs of
@@ -118,6 +118,9 @@ starting a web server.
 
 ### Design decisions
 
+#### How the numbers are built
+
+
 **Loaders never repair anything.** They validate types and domains and stop
 there. Every fix lives in the data-quality layer with a recorded treatment, so
 the raw frame stays available to reconcile against the source system, and no
@@ -141,6 +144,15 @@ wrong by a factor of 150. The direction is derived from the file's own
 functions behind a lookup on product type. Adding a product means adding a
 function.
 
+**Nothing is valued at an assumed level.** A missing price or sensitivity
+excludes the trade and raises an error rather than defaulting to zero or
+carrying yesterday's number forward.
+
+
+
+#### What the risk views answer
+
+
 **Risk is reported along the curve, not just as a book total.** A book-level
 DV01 says what a parallel shift is worth and nothing about where the position
 sits, and it hides a curve trade completely — a long and a short of equal size
@@ -159,6 +171,22 @@ position that shared the old bucket sits at 3-12M. Rows where most of the gross
 exposure is near-term are marked `rolls off` on screen — measured gross rather
 than net, because a front-end long against a far short cancels to zero and
 still rolls off.
+
+**Counterparty exposure is not notional.** A ten million dollar forward against
+Citi is ten million of business and, on this extract, no credit risk at all: the
+trade is marked against the desk, so the name owes nothing and a default costs
+nothing. Exposure is the mark where it is positive and zero where it is not.
+Netting instead would report a relationship the desk is losing on as costing
+nothing to lose — Nomura nets to −149k and would still take 132k out of the desk
+tomorrow. And the notional column has to be converted before it is compared:
+summed as it stands, mixing JPY, KRW and USD, KB Securities is 61% of the book
+and first by a distance; in USD it is 9.4% and sixth; by exposure it is 4.5%.
+Three questions, three orderings, and only one of them is a credit limit.
+
+
+
+#### How the screen reads
+
 
 **A trade is not a position.** The P&L table sorts by size, so the two largest
 lines in EQD-ASIA-01 were TRD-034 at −113k and TRD-039 at +103k — both Nikkei
@@ -193,17 +221,6 @@ derivatives and FX books. Counted per metric rather than summed across them:
 adding a book's Delta, DV01 and JTD to get "its near-term exposure" produces a
 number dominated by whichever metric is quoted in the largest units.
 
-**Counterparty exposure is not notional.** A ten million dollar forward against
-Citi is ten million of business and, on this extract, no credit risk at all: the
-trade is marked against the desk, so the name owes nothing and a default costs
-nothing. Exposure is the mark where it is positive and zero where it is not.
-Netting instead would report a relationship the desk is losing on as costing
-nothing to lose — Nomura nets to −149k and would still take 132k out of the desk
-tomorrow. And the notional column has to be converted before it is compared:
-summed as it stands, mixing JPY, KRW and USD, KB Securities is 61% of the book
-and first by a distance; in USD it is 9.4% and sixth; by exposure it is 4.5%.
-Three questions, three orderings, and only one of them is a credit limit.
-
 **Accessibility is checked by a machine, because two careful readings were not
 enough.** `aria-selected` on plain buttons is invalid — the attribute is only
 allowed on a handful of roles — and it survived a deliberate accessibility pass
@@ -216,10 +233,6 @@ a combo box with no accessible name, and the summary cards jumped from `h1` to
 `h3`. One test in that file asserts the check still *fails* on a known-bad
 fragment — an assertion helper that quietly stops asserting passes every test
 it is in, and reads as evidence.
-
-**Nothing is valued at an assumed level.** A missing price or sensitivity
-excludes the trade and raises an error rather than defaulting to zero or
-carrying yesterday's number forward.
 
 ---
 

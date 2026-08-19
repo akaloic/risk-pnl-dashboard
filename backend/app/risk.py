@@ -95,7 +95,7 @@ def tenor_bucket(maturity: pd.Timestamp, as_of: date) -> str:
 
 
 def _bucket_order(label: str) -> int:
-    """Position along the curve, so the grid never sorts 10Y+ next to 0-1Y."""
+    """Position along the curve, so the grid never sorts 10Y+ next to 0-3M."""
     labels = [_MATURED, *(label for label, _ in _TENOR_BUCKETS)]
     return labels.index(label)
 
