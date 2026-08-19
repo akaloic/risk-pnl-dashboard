@@ -4,8 +4,8 @@ Deliberately a leaf module: it holds no pandas logic and imports nothing from
 the rest of the app, so every engine -- cleaning, positions, pricing,
 reconciliation -- can report a finding without depending on any of the others.
 That is what lets the data quality report be assembled from all of them at
-once, with one set of codes that the tests and the README refer to by the same
-name.
+once, with one set of codes that the panel on screen, the tests and
+docs/DATA.md all name the same way.
 """
 
 from enum import Enum

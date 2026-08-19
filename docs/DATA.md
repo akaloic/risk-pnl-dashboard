@@ -8,24 +8,23 @@ the [README](../README.md).
 
 ## What was found in the data
 
-Every item below is detected at runtime and shown in the Data quality panel
-with the treatment applied. **32 findings** as of 2026-08-05: 5 errors, 23
-warnings, 4 benign.
+**32 findings** as of 2026-08-05: 5 errors, 23 warnings, 4 benign. The `code`
+column is the name the panel shows on screen and the tests assert on.
 
-| # | What | Where | Treatment |
-|---|---|---|---|
-| 1 | Exact duplicate blotter row | TRD-015 | Dropped, first kept. Keeping it doubles the trade's CREDIT P&L while the risk file carries one set of sensitivities — the two would stop reconciling. |
-| 2 | `trade_date` as MM/DD/YYYY | TRD-023, TRD-034 | Repaired, but only because the alternative reading is impossible (no 28th month). An ambiguous date is left null and escalated. Each repair is cross-checked against `settle_date`. |
-| 3 | Side encoded twice: quantity −100 **and** SELL | TRD-039 | Quantity taken as a magnitude; direction carries the sign. Taken literally it multiplies out to a long and flips the P&L. |
-| 4 | No contract multiplier anywhere in the extracts | NKY, HSI, KOSPI200 | Recovered from the risk file: `Delta_USD = qty × multiplier × price / fx` inverts to 1,000 and 250. Without them the equity P&L is out by up to 1,000×. HSI has no future to invert, so 50 is the exchange spec, corroborated but not derived. |
-| 5 | FX absent from `market_data.csv` | all FX | Valued from `fx_rates.csv` alone; exposure derived from the blotter and cross-checked against `Delta_USD`. |
-| 6 | Settled FX spots still marked LIVE | TRD-021/022/024 | Classified SETTLED and excluded from open risk. The risk file still publishes **19.4m USD** of delta for them, against 18.6m genuinely open. |
-| 7 | Quote timestamped a day before its snapshot | CDB-3.4-2028 @ 08-05 | Used as published — it is the only price for that day — and flagged so the P&L it feeds can be challenged. |
-| 8 | Implausible durations | 4 swaps + 4 bonds | The four swaps carry 0.9y regardless of tenor. Worse, four bonds carry a duration **longer than their remaining life** — TRD-010 shows 7.82y on a bond maturing in ten months. Quarantined: duration feeds no number. |
-| 9 | Risk metric naming | all | Normalised onto the glossary spelling on ingest, so one sensitivity cannot split across two buckets. |
-| 10 | Equity notional booked as 0 | all EQD | Sized on contracts × multiplier; a notional-driven valuation reports the book flat. |
-| 11 | `value_usd` consistency | 24 rows | All reconcile to the cent — checked at the date each row was struck, and only for rows denominated in a currency. Duration is in years; converting a tenor would leave the check permanently red. |
-| 12 | Instruments quoted but never traded | 4 instruments | Ignored cleanly: the position is zero. |
+| # | What | Code | Where | Treatment |
+|---|---|---|---|---|
+| 1 | Exact duplicate blotter row | `DUPLICATE_TRADE_ROW` | TRD-015 | Dropped, first kept. Keeping it doubles the trade's CREDIT P&L while the risk file carries one set of sensitivities — the two would stop reconciling. |
+| 2 | `trade_date` as MM/DD/YYYY | `MALFORMED_TRADE_DATE` | TRD-023, TRD-034 | Repaired, but only because the alternative reading is impossible (no 28th month). An ambiguous date is left null and escalated. Each repair is cross-checked against `settle_date`. |
+| 3 | Side encoded twice: quantity −100 **and** SELL | `NEGATIVE_QUANTITY_WITH_DIRECTION` | TRD-039 | Quantity taken as a magnitude; direction carries the sign. Taken literally it multiplies out to a long and flips the P&L. |
+| 4 | No contract multiplier anywhere in the extracts | — | NKY, HSI, KOSPI200 | Recovered from the risk file: `Delta_USD = qty × multiplier × price / fx` inverts to 1,000 and 250. Without them the equity P&L is out by up to 1,000×. HSI has no future to invert, so 50 is the exchange spec, corroborated but not derived. |
+| 5 | FX absent from `market_data.csv` | — | all FX | Valued from `fx_rates.csv` alone; exposure derived from the blotter and cross-checked against `Delta_USD`. |
+| 6 | Settled FX spots still marked LIVE | `SETTLED_TRADE_MARKED_LIVE`<br>`SETTLED_TRADE_CARRIES_RISK` | TRD-021/022/024 | Classified SETTLED and excluded from open risk. The risk file still publishes **19.4m USD** of delta for them, against 18.6m genuinely open. |
+| 7 | Quote timestamped a day before its snapshot | `STALE_QUOTE` | CDB-3.4-2028 @ 08-05 | Used as published — it is the only price for that day — and flagged so the P&L it feeds can be challenged. |
+| 8 | Implausible durations | `IMPLAUSIBLE_DURATION` | 4 swaps + 4 bonds | The four swaps carry 0.9y regardless of tenor. Worse, four bonds carry a duration **longer than their remaining life** — TRD-010 shows 7.82y on a bond maturing in ten months. Quarantined: duration feeds no number. |
+| 9 | Risk metric naming | — | all | Normalised onto the glossary spelling on ingest, so one sensitivity cannot split across two buckets. |
+| 10 | Equity notional booked as 0 | — | all EQD | Sized on contracts × multiplier; a notional-driven valuation reports the book flat. |
+| 11 | `value_usd` consistency | `VALUE_USD_MISMATCH` | 24 rows | All reconcile to the cent — checked at the date each row was struck, and only for rows denominated in a currency. Duration is in years; converting a tenor would leave the check permanently red. |
+| 12 | Instruments quoted but never traded | `QUOTE_WITHOUT_POSITION` | 4 instruments | Ignored cleanly: the position is zero. |
 
 ### Found beyond the brief
 

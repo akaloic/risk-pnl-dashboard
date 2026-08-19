@@ -40,8 +40,9 @@ the raw frame stays available to reconcile against the source system, and no
 correction is ever buried inside a `read_csv` call.
 
 **Each engine returns `(result, issues)`.** One shared vocabulary of issue
-codes means the data quality panel, the tests and this README all name the same
-finding the same way, and a new check anywhere shows up in the report for free.
+codes means the data quality panel, the tests and [DATA.md](DATA.md) all name
+the same finding the same way, and a new check anywhere shows up in the report
+for free.
 
 **The dataset is assembled once.** The daily replay values the book on 24
 business days; re-cleaning per day would report the same duplicate trade 24
