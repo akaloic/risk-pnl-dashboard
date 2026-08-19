@@ -85,7 +85,7 @@ it covers, rather than a partial answer.
 ## Architecture
 
 ```
-loaders → dq → positions → pnl → analytics → api
+loaders → dq → positions → { pnl → analytics, risk } → api
 config · models · issues · contracts · fx      (leaf helpers)
 ```
 
@@ -100,6 +100,7 @@ starting a web server.
 | `positions` | Net by book and instrument; decide what has settled. |
 | `pnl` | Mark to market, one pricing method per product class. |
 | `analytics` | Replay the month; summarise per book. |
+| `risk` | Aggregate sensitivities by book and metric, and split them along the curve. |
 | `checks` / `reconciliation` | Market data quality; blotter against risk file. |
 | `report` | Assemble every finding into one ordered report. |
 | `api` | Thin FastAPI layer over the engines. |
