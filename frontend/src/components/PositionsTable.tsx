@@ -12,12 +12,27 @@
 import { useMemo, useState } from "react";
 import type { Position } from "../api/types";
 import { plain, signOf } from "../lib/format";
+import { type SortState, ariaSortFor, nextSort, sortRows } from "../lib/sorting";
 import { Empty } from "./Loading";
 
-type SortKey = "book_id" | "instrument_id" | "net_quantity" | "net_notional";
+// Every column the table shows is sortable. Half of them being inert taught a
+// user that sorting does not work here, which is worse than not offering it.
+type SortKey =
+  | "book_id"
+  | "instrument_id"
+  | "product_type"
+  | "currency"
+  | "net_quantity"
+  | "gross_quantity"
+  | "net_notional"
+  | "trade_count"
+  | "position_status";
 
 export function PositionsTable({ positions }: { positions: Position[] }) {
-  const [sort, setSort] = useState<SortKey>("book_id");
+  const [sort, setSort] = useState<SortState<SortKey>>({
+    key: "book_id",
+    direction: "asc",
+  });
   const [openOnly, setOpenOnly] = useState(false);
 
   const rows = useMemo(() => {
@@ -25,28 +40,23 @@ export function PositionsTable({ positions }: { positions: Position[] }) {
       ? positions.filter((row) => row.position_status === "OPEN")
       : positions;
 
-    return [...filtered].sort((a, b) => {
-      const left = a[sort];
-      const right = b[sort];
-      if (typeof left === "number" && typeof right === "number") {
-        return Math.abs(right) - Math.abs(left);
-      }
-      return String(left).localeCompare(String(right));
-    });
+    return sortRows(filtered, sort);
   }, [positions, sort, openOnly]);
 
   // The control is a button inside the header rather than a click handler on
   // the cell itself: a bare onClick on a <th> cannot be reached by keyboard and
   // announces nothing, so the column would be unsortable without a mouse.
   const header = (key: SortKey, label: string, numeric = false) => (
-    <th
-      scope="col"
-      className={numeric ? "num" : undefined}
-      aria-sort={sort === key ? "descending" : "none"}
-    >
-      <button type="button" className="sort" onClick={() => setSort(key)}>
+    <th scope="col" className={numeric ? "num" : undefined} aria-sort={ariaSortFor(sort, key)}>
+      <button
+        type="button"
+        className="sort"
+        onClick={() => setSort((current) => nextSort(current, key))}
+      >
         {label}
-        {sort === key ? " ▾" : ""}
+        {sort.key === key && (
+          <span aria-hidden="true">{sort.direction === "desc" ? " \u25be" : " \u25b4"}</span>
+        )}
       </button>
     </th>
   );
@@ -77,13 +87,13 @@ export function PositionsTable({ positions }: { positions: Position[] }) {
             <tr>
               {header("book_id", "Book")}
               {header("instrument_id", "Instrument")}
-              <th scope="col">Product</th>
-              <th scope="col">Ccy</th>
+              {header("product_type", "Product")}
+              {header("currency", "Ccy")}
               {header("net_quantity", "Net qty", true)}
-              <th scope="col" className="num">Gross qty</th>
+              {header("gross_quantity", "Gross qty", true)}
               {header("net_notional", "Net notional", true)}
-              <th scope="col" className="num">Trades</th>
-              <th scope="col">Status</th>
+              {header("trade_count", "Trades", true)}
+              {header("position_status", "Status")}
             </tr>
           </thead>
           <tbody>

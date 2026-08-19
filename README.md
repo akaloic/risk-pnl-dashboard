@@ -48,14 +48,15 @@ source .venv/bin/activate && python -m pytest
 cd frontend && npm test
 ```
 
-180 backend tests and 40 on the front end, and they pass on a fresh clone
+180 backend tests and 48 on the front end, and they pass on a fresh clone
 **with no `data/` directory at all**: the suite runs against hand-written
 fixtures in `tests/fixtures/` that reproduce every quirk found in the real
 extracts. That is deliberate — the real files are confidential and are not in
 this repository.
 
 The frontend tests cover the pure logic only — axis scaling, formatting, the
-series aggregation, the curve pivot and the leg grouping — not the rendering.
+series aggregation, the curve pivot, the leg grouping and the sort order — not
+the rendering.
 Those are where a wrong answer is silent: a mis-scaled axis, a mis-grouped
 total, a mis-rounded figure, a curve sorted `0-3M, 10Y+, 1-3Y` and a hedged
 position read as two losing trades all draw a screen that looks entirely
@@ -156,6 +157,13 @@ September futures, one position netting to −10k. Read as separate rows, the
 worst line on the desk looked eleven times worse than it was. Trades sharing an
 instrument are now marked `leg` with the net beside them; on that book 8 of the
 10 rows are legs of 6 positions.
+
+**The positions table sorts by magnitude, not by value.** The question a desk
+asks is "what is my biggest position", and a short of 5m matters exactly as
+much as a long of 5m — sorting signed would bury every short behind every long,
+however small. The sign is carried by colour instead. All nine columns sort and
+the direction toggles: half a table being inert taught a user that sorting does
+not work here, which is worse than not offering it.
 
 **Nothing is valued at an assumed level.** A missing price or sensitivity
 excludes the trade and raises an error rather than defaulting to zero or
