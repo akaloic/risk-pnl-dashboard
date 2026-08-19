@@ -428,3 +428,13 @@ th button.sort:hover { color: var(--text); }
   border: 1px solid rgba(224, 163, 62, 0.35);
   color: var(--warning);
 }
+
+/* The figures that carry a table: heavier, and pulled up out of the muted
+   palette the rest of the column sits in. Only ever applied within a set of
+   figures in one unit -- see lib/emphasis.ts. */
+.num.dominant {
+  font-weight: 600;
+}
+
+.num.dominant.up { color: #6fe0a6; }
+.num.dominant.down { color: #ff7a80; }

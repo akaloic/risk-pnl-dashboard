@@ -14,6 +14,7 @@ import { useCallback, useMemo } from "react";
 import { api } from "../api/client";
 import { useEndpoint } from "../hooks/useEndpoint";
 import { level, signOf, usd, usdPrecise } from "../lib/format";
+import { dominates } from "../lib/emphasis";
 import { positionKey, positionsByInstrument } from "../lib/legs";
 import { Loadable } from "./Loading";
 
@@ -42,6 +43,10 @@ export function TradeDetail({ book, asOf, expected, onClose }: Props) {
   // their own right. Sorting by size puts the legs of a hedged position at the
   // top of the table looking like the two worst trades on the desk.
   const positions = useMemo(() => positionsByInstrument(rows), [rows]);
+
+  // Every figure in the USD column is the same unit, so the eye can be pointed
+  // at the trades that actually made the book's number.
+  const isBig = useMemo(() => dominates(rows.map((row) => row.pnl_usd)), [rows]);
 
   const total = rows.reduce((sum, row) => sum + row.pnl_usd, 0);
   const tiesOut = Math.abs(total - expected) < 0.01;
@@ -102,7 +107,11 @@ export function TradeDetail({ book, asOf, expected, onClose }: Props) {
                   <td className="num">{level(row.current_level)}</td>
                   <td className={`num ${signOf(row.pnl_ccy)}`}>{level(row.pnl_ccy)}</td>
                   <td className="flat">{row.pnl_currency}</td>
-                  <td className={`num ${signOf(row.pnl_usd)}`}>{usdPrecise(row.pnl_usd)}</td>
+                  <td
+                    className={`num ${signOf(row.pnl_usd)}${isBig(row.pnl_usd) ? " dominant" : ""}`}
+                  >
+                    {usdPrecise(row.pnl_usd)}
+                  </td>
                 </tr>
               ))}
             </tbody>

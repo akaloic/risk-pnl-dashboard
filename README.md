@@ -165,6 +165,17 @@ however small. The sign is carried by colour instead. All nine columns sort and
 the direction toggles: half a table being inert taught a user that sorting does
 not work here, which is worse than not offering it.
 
+**Weight is only assigned where the unit is common.** Every figure carrying the
+same typographic weight meant a JTD of −14.8m and a CS01 of 4,500 looked
+equally important and the eye had nothing to land on. Figures that dominate
+their own set now read heavier — but only within a set in one unit: down the
+P&L column of a trade table, or across one row of the curve grid where every
+cell is the same metric at a different tenor. Down a *column* of the curve grid
+would be a JTD against a CS01, and across a positions table would be yen
+against dollars; in both the heaviest number on screen would be the one in the
+smallest currency. A lone figure is never marked, since there is nothing for it
+to be big against.
+
 **Nothing is valued at an assumed level.** A missing price or sensitivity
 excludes the trade and raises an error rather than defaulting to zero or
 carrying yesterday's number forward.

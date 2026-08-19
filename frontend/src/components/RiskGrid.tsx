@@ -14,6 +14,7 @@
 import { useMemo } from "react";
 import type { RiskResponse } from "../api/types";
 import { level, plain, signOf, usd } from "../lib/format";
+import { dominates } from "../lib/emphasis";
 import { isCurvePosition, nearTermShare, pivotByTenor } from "../lib/tenors";
 
 export function RiskGrid({ risk }: { risk: RiskResponse }) {
@@ -91,7 +92,13 @@ export function RiskGrid({ risk }: { risk: RiskResponse }) {
               </tr>
             </thead>
             <tbody>
-              {curve.rows.map((row) => (
+              {curve.rows.map((row) => {
+                // Within a row every cell is the same metric at a different
+                // tenor, so magnitudes are comparable and the biggest of them
+                // is where this book's risk actually sits. Down a column they
+                // would not be -- that is a JTD against a CS01.
+                const isBig = dominates([...row.cells.values()]);
+                return (
                 <tr key={`${row.book}/${row.metric}`}>
                   <th scope="row">{row.book}</th>
                   <td>
@@ -108,7 +115,9 @@ export function RiskGrid({ risk }: { risk: RiskResponse }) {
                     return (
                       <td
                         key={bucket}
-                        className={`num ${value === undefined ? "flat" : signOf(value)}`}
+                        className={`num ${value === undefined ? "flat" : signOf(value)}${
+                          value !== undefined && isBig(value) ? " dominant" : ""
+                        }`}
                       >
                         {value === undefined ? "—" : usd(value)}
                       </td>
@@ -116,7 +125,8 @@ export function RiskGrid({ risk }: { risk: RiskResponse }) {
                   })}
                   <td className={`num ${signOf(row.total)}`}>{usd(row.total)}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
