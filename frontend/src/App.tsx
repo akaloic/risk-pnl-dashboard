@@ -119,7 +119,12 @@ export default function App() {
         >
           {pnl.data && (
             <>
-              <DeskSummary pnl={pnl.data} selected={drill} onSelect={setDrill} />
+              <DeskSummary
+                pnl={pnl.data}
+                tenors={risk.data?.by_tenor}
+                selected={drill}
+                onSelect={setDrill}
+              />
               {drill && (
                 <TradeDetail
                   book={drill}

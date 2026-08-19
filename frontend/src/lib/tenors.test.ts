@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TenorExposure } from "../api/types";
-import { isCurvePosition, nearTermShare, pivotByTenor } from "./tenors";
+import { booksRollingOff, isCurvePosition, nearTermShare, pivotByTenor } from "./tenors";
 
 const cell = (
   book: string,
@@ -142,5 +142,43 @@ describe("nearTermShare", () => {
     const { rows } = pivotByTenor([cell("A", "DV01", "0-3M", 0)]);
 
     expect(nearTermShare(rows[0])).toBe(0);
+  });
+});
+
+describe("booksRollingOff", () => {
+  it("flags a book whose every metric is near-term", () => {
+    const flagged = booksRollingOff([
+      cell("EQD-ASIA-01", "Delta_USD", "0-3M", 37_924_168),
+      cell("EQD-ASIA-01", "Vega_USD", "0-3M", 30_395),
+    ]);
+
+    expect(flagged.has("EQD-ASIA-01")).toBe(true);
+  });
+
+  it("leaves a book alone when one of its metrics sits further out", () => {
+    // Partial is not the same as whole: a book with real risk past the quarter
+    // must not be labelled as rolling off it.
+    const flagged = booksRollingOff([
+      cell("MIXED", "Delta_USD", "0-3M", 5_000_000),
+      cell("MIXED", "DV01", "5-10Y", 7_848),
+    ]);
+
+    expect(flagged.has("MIXED")).toBe(false);
+  });
+
+  it("never adds one metric to another", () => {
+    // A JTD in the millions beside a DV01 in the hundreds: summed, the DV01
+    // vanishes and the book is judged on the JTD alone. Counted per metric,
+    // the far-dated DV01 still keeps the book off the list.
+    const flagged = booksRollingOff([
+      cell("CREDIT-ASIA-01", "JTD_USD", "0-3M", -14_000_000),
+      cell("CREDIT-ASIA-01", "DV01", "3-5Y", 1_068),
+    ]);
+
+    expect(flagged.has("CREDIT-ASIA-01")).toBe(false);
+  });
+
+  it("returns nothing for an empty grid", () => {
+    expect(booksRollingOff([]).size).toBe(0);
   });
 });

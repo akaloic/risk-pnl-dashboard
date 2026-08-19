@@ -438,3 +438,11 @@ th button.sort:hover { color: var(--text); }
 
 .num.dominant.up { color: #6fe0a6; }
 .num.dominant.down { color: #ff7a80; }
+
+/* A badge sitting in a card heading rather than a table cell. */
+.card h3 .roll-flag {
+  margin-left: 8px;
+  text-transform: none;
+  letter-spacing: 0;
+  vertical-align: middle;
+}

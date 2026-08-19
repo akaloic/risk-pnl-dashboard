@@ -48,15 +48,15 @@ source .venv/bin/activate && python -m pytest
 cd frontend && npm test
 ```
 
-180 backend tests and 48 on the front end, and they pass on a fresh clone
+180 backend tests and 57 on the front end, and they pass on a fresh clone
 **with no `data/` directory at all**: the suite runs against hand-written
 fixtures in `tests/fixtures/` that reproduce every quirk found in the real
 extracts. That is deliberate — the real files are confidential and are not in
 this repository.
 
 The frontend tests cover the pure logic only — axis scaling, formatting, the
-series aggregation, the curve pivot, the leg grouping and the sort order — not
-the rendering.
+series aggregation, the curve pivot, the leg grouping, the sort order and the
+emphasis rule — not the rendering.
 Those are where a wrong answer is silent: a mis-scaled axis, a mis-grouped
 total, a mis-rounded figure, a curve sorted `0-3M, 10Y+, 1-3Y` and a hedged
 position read as two losing trades all draw a screen that looks entirely
@@ -175,6 +175,14 @@ would be a JTD against a CS01, and across a positions table would be yen
 against dollars; in both the heaviest number on screen would be the one in the
 smallest currency. A lone figure is never marked, since there is nothing for it
 to be big against.
+
+**The morning screen says what the risk tab knew.** A book card answered "this
+book is down 143k" and not "and all of it expires within the quarter", which
+was on another tab and therefore unread. Cards now carry `rolls off ≤3M` when
+every risk metric on the book is near-term — on this extract, the equity
+derivatives and FX books. Counted per metric rather than summed across them:
+adding a book's Delta, DV01 and JTD to get "its near-term exposure" produces a
+number dominated by whichever metric is quoted in the largest units.
 
 **Nothing is valued at an assumed level.** A missing price or sensitivity
 excludes the trade and raises an error rather than defaulting to zero or

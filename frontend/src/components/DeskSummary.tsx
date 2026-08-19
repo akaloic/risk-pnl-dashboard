@@ -7,16 +7,24 @@
  * away rather than in another tool.
  */
 
-import type { BookSummary, PnLResponse } from "../api/types";
+import { useMemo } from "react";
+import type { BookSummary, PnLResponse, TenorExposure } from "../api/types";
 import { plain, signOf, usd } from "../lib/format";
+import { booksRollingOff } from "../lib/tenors";
 
 interface Props {
   pnl: PnLResponse;
+  /** From /risk, already loaded for the risk tab. Absent while it is in flight. */
+  tenors?: TenorExposure[];
   selected: string | null;
   onSelect: (book: string | null) => void;
 }
 
-export function DeskSummary({ pnl, selected, onSelect }: Props) {
+export function DeskSummary({ pnl, tenors, selected, onSelect }: Props) {
+  // The morning question the cards could not answer: this book is down 143k,
+  // but is it a position we still have? Everything the desk needs to know that
+  // was already on the risk tab, one click away and therefore unread.
+  const rollingOff = useMemo(() => booksRollingOff(tenors ?? []), [tenors]);
   return (
     <div className="cards">
       <div className="card total">
@@ -40,9 +48,18 @@ export function DeskSummary({ pnl, selected, onSelect }: Props) {
           aria-expanded={selected === book.book_id}
           // The card reads out as a wall of figures otherwise: the accessible
           // name has to say which book and what the control does.
-          aria-label={`${book.book_id}: show the trades behind this book's P&L`}
+          aria-label={`${book.book_id}${
+            rollingOff.has(book.book_id) ? ", all risk maturing within three months" : ""
+          }: show the trades behind this book's P&L`}
         >
-          <h3>{book.book_id}</h3>
+          <h3>
+            {book.book_id}
+            {rollingOff.has(book.book_id) && (
+              <span className="roll-flag" title="Every risk metric on this book matures within three months">
+                rolls off ≤3M
+              </span>
+            )}
+          </h3>
           <div className={`headline ${signOf(book.day_usd)}`}>{usd(book.day_usd)}</div>
           <div className="label">P&amp;L today</div>
           <div className="row">

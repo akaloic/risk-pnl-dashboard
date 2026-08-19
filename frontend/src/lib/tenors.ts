@@ -91,3 +91,28 @@ export function isCurvePosition(row: CurveRow): boolean {
   const values = [...row.cells.values()].filter((value) => value !== 0);
   return values.some((value) => value > 0) && values.some((value) => value < 0);
 }
+
+/**
+ * Books whose every risk metric sits inside three months.
+ *
+ * Counted per metric rather than summed across them: a book's Delta, DV01 and
+ * JTD are three different units, and adding them to get "the book's near-term
+ * exposure" would produce a number that means nothing and is dominated by
+ * whichever metric happens to be quoted in the largest units.
+ *
+ * The test is therefore whether every metric the book carries is near-term,
+ * which is a statement that survives having no common unit: on this extract it
+ * catches the equity derivatives book, all four of whose metrics expire within
+ * the quarter, and the FX book, and leaves rates and credit alone.
+ */
+export function booksRollingOff(exposures: TenorExposure[], threshold = 0.5): Set<string> {
+  const { rows } = pivotByTenor(exposures);
+  const byBook = new Map<string, boolean>();
+
+  for (const row of rows) {
+    const near = nearTermShare(row) >= threshold;
+    byBook.set(row.book, (byBook.get(row.book) ?? true) && near);
+  }
+
+  return new Set([...byBook].filter(([, all]) => all).map(([book]) => book));
+}
