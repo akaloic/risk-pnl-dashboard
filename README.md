@@ -1,31 +1,26 @@
 # Risk & P&L — Asia cross-asset desk
 
-A prototype risk and P&L tool for four books out of Asia — rates, credit, FX
-and equity derivatives — built on the extracts from the desk's source systems.
+A working risk and P&L tool for four books out of Asia — rates, credit, FX and
+equity derivatives — built on extracts from the desk's source systems.
+Reporting currency **USD**, as of **2026-08-05**, with the whole month
+replayable day by day.
 
-Reporting currency is **USD**. Reference as-of date is **2026-08-05**, and the
-whole month from 2026-07-03 can be replayed day by day.
-
----
-
-## Running it
-
-**Requirements:** Python 3.11–3.14 and Node 18+.
-
-> Every pinned dependency ships a wheel across that whole range, so the install
-> never falls back to a compiler. The floor is set by pandas 3.0, which is the
-> only branch with 3.14 wheels and needs 3.11 or newer itself.
-
-Drop the four extracts into `data/` — they are gitignored and never committed:
-
-```
-data/trades.csv
-data/market_data.csv
-data/risk_sensitivities.csv
-data/fx_rates.csv
+```mermaid
+flowchart LR
+  CSV["4 CSV extracts"] --> loaders --> dq --> positions
+  positions --> pnl --> analytics --> api["FastAPI"]
+  positions --> risk --> api
+  positions --> counterparty --> api
+  api --> ui["React screen"]
 ```
 
-**Two commands**, each in its own terminal:
+Dependencies run one way only. Every engine is testable without starting a web
+server, which is why the numbers can be checked without the screen.
+
+## Run it
+
+**Python 3.11–3.14, Node 18+.** Drop the four extracts into `data/` — they are
+gitignored and never committed.
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate && pip install -r backend/requirements.txt && PYTHONPATH=backend uvicorn app.main:app --reload
@@ -35,289 +30,63 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r backend/req
 cd frontend && npm install && npm run dev
 ```
 
-Then open <http://localhost:5173>. The API is on <http://localhost:8000>, with
-interactive docs at <http://localhost:8000/docs>.
+Then <http://localhost:5173>. API docs at <http://localhost:8000/docs>.
 
-### Tests
+**Tests:** `python -m pytest` and `cd frontend && npm test` — 189 + 124, and
+they pass on a fresh clone **with no `data/` directory at all**, against
+hand-written fixtures that reproduce the real quirks.
 
-```bash
-source .venv/bin/activate && python -m pytest
-```
-
-```bash
-cd frontend && npm test
-```
-
-189 backend tests and 124 on the front end, and they pass on a fresh clone
-**with no `data/` directory at all**: the suite runs against hand-written
-fixtures in `tests/fixtures/` that reproduce every quirk found in the real
-extracts. That is deliberate — the real files are confidential and are not in
-this repository.
-
-They split in two. Seven pure modules — axis scaling, formatting, the series
-aggregation, the curve pivot, the leg grouping, the sort order and the emphasis
-rule — are tested without a DOM, because that is where a wrong answer is
-silent: a mis-scaled axis, a mis-grouped total, a curve sorted
-`0-3M, 10Y+, 1-3Y` and a hedged position read as two losing trades all draw a
-screen that looks entirely normal.
-
-All nine components are then rendered and driven, which is what stops a
-correct function from being asked the wrong question. Those tests assert what
-the screen has to say rather than how it is built: that a badge claiming a book
-rolls off never appears on a book holding far-dated risk, that the two legs of
-one instrument show their net, that a large short sorts alongside a large long
-instead of below every long, that the panel never shows a finding without its
-treatment, and that a failed request surfaces the backend's own explanation
-rather than replacing it with a status code.
-
----
-
-## What it does
+## What it shows
 
 | View | Answers |
 |---|---|
-| **Desk summary** | Where does each book stand, and what moved overnight? Daily P&L chart over the month. |
-| **Positions** | What do we actually hold, netted by book and instrument, and what has settled? |
-| **Risk** | What are we exposed to, per book and metric — how much of that exposure is real, **where on the curve does it sit**, and **who are we facing**? |
+| **Desk summary** | Where does each book stand, what moved overnight, and is it a position we still have? |
+| **Positions** | What do we hold, netted by book and instrument, and what has settled? |
+| **Risk** | What are we exposed to, where on the curve does it sit, and who are we facing? |
 | **Data quality** | What was wrong with the data, and what did the tool do about it? |
 
-### Endpoints
+## Nothing is repaired silently
 
-`GET /health` · `/positions` · `/pnl` · `/pnl/trades` · `/risk` ·
-`/counterparty` · `/data-quality` · `/reconciliation`
-
-All except `/health` accept `?as_of=YYYY-MM-DD` to replay any published
-business day. A date the extract does not price returns **400** with the range
-it covers, rather than a partial answer.
-
----
-
-## Architecture
-
-```
-loaders → dq → positions → { pnl → analytics, risk } → api
-config · models · issues · contracts · fx      (leaf helpers)
+```mermaid
+flowchart LR
+  D["defect found"] --> Q{"repairable without<br/>guessing?"}
+  Q -->|yes| R["repair, record the treatment"]
+  Q -->|no| E["escalate untreated, record why"]
+  R --> P["Data quality panel"]
+  E --> P
 ```
 
-Dependencies run one way only; there are no cycles. Each layer is testable
-without the one above it, which is why the numbers can be verified without
-starting a web server.
+**32 findings** on this extract — 5 errors, 23 warnings, 4 benign — each shown
+with what the tool did about it. A figure a trader disputes at 07:30 is only
+useful if we can say exactly what changed underneath it.
 
-| Module | Responsibility |
-|---|---|
-| `loaders` | Read the CSVs, coerce dtypes, reject undocumented values. No repairs. |
-| `dq` | Clean the blotter, recording every treatment applied. |
-| `positions` | Net by book and instrument; decide what has settled. |
-| `pnl` | Mark to market, one pricing method per product class. |
-| `analytics` | Replay the month; summarise per book. |
-| `risk` | Aggregate sensitivities by book and metric, and split them along the curve. |
-| `counterparty` | Rank the names the desk faces by what a default would cost. |
-| `checks` / `reconciliation` | Market data quality; blotter against risk file. |
-| `report` | Assemble every finding into one ordered report. |
-| `api` | Thin FastAPI layer over the engines. |
+## The three things the data hid
 
-### Design decisions
+**No contract multiplier exists anywhere in the extracts.** Equity trades book
+a notional of 0 and a quantity in contracts. Left at 1, the Nikkei book is
+wrong by a factor of 1,000 and still looks entirely plausible on screen. The
+values were recovered by inverting the risk file's own identity, cross-checked
+on independent trades — and HSI, which has no future to invert, is labelled
+*corroborated, not derived*.
 
-#### How the numbers are built
+**A naive settlement rule empties the book.** 34 of 40 trades have a settlement
+date in the past. Settlement ends an FX spot and *starts* a bond. And the NDFs
+carry a spot-leg `settle_date` while running to maturity a month later.
 
+**Notional is not exposure, and it is not even comparable.** Summed raw across
+JPY, KRW and USD, one counterparty is 61% of the book and first by a distance;
+in USD it is 9.4% and sixth; by what a default would actually cost, 4.5%.
 
-**Loaders never repair anything.** They validate types and domains and stop
-there. Every fix lives in the data-quality layer with a recorded treatment, so
-the raw frame stays available to reconcile against the source system, and no
-correction is ever buried inside a `read_csv` call.
+## What it does not do
 
-**Each engine returns `(result, issues)`.** One shared vocabulary of issue
-codes means the data quality panel, the tests and this README all name the same
-finding the same way, and a new check anywhere shows up in the report for free.
-
-**The dataset is assembled once.** The daily replay values the book on 24
-business days; re-cleaning per day would report the same duplicate trade 24
-times over.
-
-**FX conversion is its own module.** The extract mixes both quoting conventions
-— USD is the base of USDJPY but the quote of EURUSD — and getting one backwards
-raises nothing, warns about nothing, and produces a plausible number that is
-wrong by a factor of 150. The direction is derived from the file's own
-`base_ccy`/`quote_ccy` columns and pinned by tests in both directions.
-
-**Pricing is a registry, not a conditional.** Five methods, five short
-functions behind a lookup on product type. Adding a product means adding a
-function.
-
-**Nothing is valued at an assumed level.** A missing price or sensitivity
-excludes the trade and raises an error rather than defaulting to zero or
-carrying yesterday's number forward.
-
-
-
-#### What the risk views answer
-
-
-**Risk is reported along the curve, not just as a book total.** A book-level
-DV01 says what a parallel shift is worth and nothing about where the position
-sits, and it hides a curve trade completely — a long and a short of equal size
-net to almost nothing while carrying real exposure to the shape. RATES-ASIA-01
-is exactly that: a total of 6,442 USD that is actually short the front and the
-belly and long the 5-10Y point. Buckets come from each trade's own
-`maturity_date` rather than from parsing an instrument id, and their order is
-carried as data — sorted as text, `10Y+` lands between `0-3M` and `1-3Y`.
-
-**The front of the curve is split at three months, not at a year.** A single
-0-1Y bucket held 17 trades maturing anywhere from 22 to 309 days out, and 16 of
-those 17 fall inside 60 days. Splitting it says what the desk actually looks
-like: **100% of the equity derivatives book and 100% of the FX book mature
-within three months**, carrying 396k USD of the 444k loss, while the rates
-position that shared the old bucket sits at 3-12M. Rows where most of the gross
-exposure is near-term are marked `rolls off` on screen — measured gross rather
-than net, because a front-end long against a far short cancels to zero and
-still rolls off.
-
-**Counterparty exposure is not notional.** A ten million dollar forward against
-Citi is ten million of business and, on this extract, no credit risk at all: the
-trade is marked against the desk, so the name owes nothing and a default costs
-nothing. Exposure is the mark where it is positive and zero where it is not.
-Netting instead would report a relationship the desk is losing on as costing
-nothing to lose — Nomura nets to −149k and would still take 132k out of the desk
-tomorrow. And the notional column has to be converted before it is compared:
-summed as it stands, mixing JPY, KRW and USD, KB Securities is 61% of the book
-and first by a distance; in USD it is 9.4% and sixth; by exposure it is 4.5%.
-Three questions, three orderings, and only one of them is a credit limit.
-
-
-
-#### How the screen reads
-
-
-**A trade is not a position.** The P&L table sorts by size, so the two largest
-lines in EQD-ASIA-01 were TRD-034 at −113k and TRD-039 at +103k — both Nikkei
-September futures, one position netting to −10k. Read as separate rows, the
-worst line on the desk looked eleven times worse than it was. Trades sharing an
-instrument are now marked `leg` with the net beside them; on that book 8 of the
-10 rows are legs of 6 positions.
-
-**The positions table sorts by magnitude, not by value.** The question a desk
-asks is "what is my biggest position", and a short of 5m matters exactly as
-much as a long of 5m — sorting signed would bury every short behind every long,
-however small. The sign is carried by colour instead. All nine columns sort and
-the direction toggles: half a table being inert taught a user that sorting does
-not work here, which is worse than not offering it.
-
-**Weight is only assigned where the unit is common.** Every figure carrying the
-same typographic weight meant a JTD of −14.8m and a CS01 of 4,500 looked
-equally important and the eye had nothing to land on. Figures that dominate
-their own set now read heavier — but only within a set in one unit: down the
-P&L column of a trade table, or across one row of the curve grid where every
-cell is the same metric at a different tenor. Down a *column* of the curve grid
-would be a JTD against a CS01, and across a positions table would be yen
-against dollars; in both the heaviest number on screen would be the one in the
-smallest currency. A lone figure is never marked, since there is nothing for it
-to be big against.
-
-**The morning screen says what the risk tab knew.** A book card answered "this
-book is down 143k" and not "and all of it expires within the quarter", which
-was on another tab and therefore unread. Cards now carry `rolls off ≤3M` when
-every risk metric on the book is near-term — on this extract, the equity
-derivatives and FX books. Counted per metric rather than summed across them:
-adding a book's Delta, DV01 and JTD to get "its near-term exposure" produces a
-number dominated by whichever metric is quoted in the largest units.
-
-**Accessibility is checked by a machine, because two careful readings were not
-enough.** `aria-selected` on plain buttons is invalid — the attribute is only
-allowed on a handful of roles — and it survived a deliberate accessibility pass
-here before being found by hand. Two layers now run on every `npm test`:
-oxlint's `jsx-a11y` rules read the source, and axe-core runs over what each of
-the nine components actually renders, which is where a role with no container,
-an `aria-controls` pointing at nothing, or a heading level that skips can only
-be seen. Turning it on immediately found two more: the chart's book filter was
-a combo box with no accessible name, and the summary cards jumped from `h1` to
-`h3`. One test in that file asserts the check still *fails* on a known-bad
-fragment — an assertion helper that quietly stops asserting passes every test
-it is in, and reads as evidence.
+FX forwards and NDFs are marked on spot: `fx_rates.csv` has no forward points,
+so the rate differential is absent from **267k USD, about 60% of the desk
+total**. Stated here rather than buried, because it is the largest
+approximation in the tool.
 
 ---
 
-## What was found in the data
-
-Every item below is detected at runtime and shown in the Data quality panel
-with the treatment applied. **32 findings** as of 2026-08-05: 5 errors, 23
-warnings, 4 benign.
-
-| # | What | Where | Treatment |
-|---|---|---|---|
-| 1 | Exact duplicate blotter row | TRD-015 | Dropped, first kept. Keeping it doubles the trade's CREDIT P&L while the risk file carries one set of sensitivities — the two would stop reconciling. |
-| 2 | `trade_date` as MM/DD/YYYY | TRD-023, TRD-034 | Repaired, but only because the alternative reading is impossible (no 28th month). An ambiguous date is left null and escalated. Each repair is cross-checked against `settle_date`. |
-| 3 | Side encoded twice: quantity −100 **and** SELL | TRD-039 | Quantity taken as a magnitude; direction carries the sign. Taken literally it multiplies out to a long and flips the P&L. |
-| 4 | No contract multiplier anywhere in the extracts | NKY, HSI, KOSPI200 | Recovered from the risk file: `Delta_USD = qty × multiplier × price / fx` inverts to 1,000 and 250. Without them the equity P&L is out by up to 1,000×. HSI has no future to invert, so 50 is the exchange spec, corroborated but not derived. |
-| 5 | FX absent from `market_data.csv` | all FX | Valued from `fx_rates.csv` alone; exposure derived from the blotter and cross-checked against `Delta_USD`. |
-| 6 | Settled FX spots still marked LIVE | TRD-021/022/024 | Classified SETTLED and excluded from open risk. The risk file still publishes **19.4m USD** of delta for them, against 18.6m genuinely open. |
-| 7 | Quote timestamped a day before its snapshot | CDB-3.4-2028 @ 08-05 | Used as published — it is the only price for that day — and flagged so the P&L it feeds can be challenged. |
-| 8 | Implausible durations | 4 swaps + 4 bonds | The four swaps carry 0.9y regardless of tenor. Worse, four bonds carry a duration **longer than their remaining life** — TRD-010 shows 7.82y on a bond maturing in ten months. Quarantined: duration feeds no number. |
-| 9 | Risk metric naming | all | Normalised onto the glossary spelling on ingest, so one sensitivity cannot split across two buckets. |
-| 10 | Equity notional booked as 0 | all EQD | Sized on contracts × multiplier; a notional-driven valuation reports the book flat. |
-| 11 | `value_usd` consistency | 24 rows | All reconcile to the cent — checked at the date each row was struck, and only for rows denominated in a currency. Duration is in years; converting a tenor would leave the check permanently red. |
-| 12 | Instruments quoted but never traded | 4 instruments | Ignored cleanly: the position is zero. |
-
-### Found beyond the brief
-
-- **NDF settlement convention.** The two NDFs carry `settle_date` = trade + 2
-  business days — the spot leg — while running to maturity a month later.
-  Closing FX on `settle_date` would have retired both and dropped 10.0m and
-  −7.0m USD of live delta. Spot closes on `settle_date`, forwards and NDFs on
-  `maturity_date`.
-- **A position that cannot be marked.** TRD-011 holds 5m USD of Hongkong Land
-  2029, which appears nowhere in `market_data.csv`. The mirror image of the
-  harmless orphan quotes, and unlike them it means a book is incomplete.
-- **Price and yield are not derived from one another.** Five bond series imply
-  *negative* durations from their own price and yield moves. Bonds are
-  therefore valued on clean price alone, per the desk's method, and the yield
-  column is never used to verify P&L.
-- **The risk file was priced off a different snapshot.** Its implied index
-  levels (37,920.00 and 358.90) appear nowhere in the market data, whose quotes
-  all carry four decimals of noise. On the KOSPI the gap is 4.5%, so equity
-  delta and equity P&L cannot be expected to tie out exactly.
-
----
-
-## Open questions for the desk
-
-**TRD-027** is an FX spot with no `settle_date` whose maturity has passed. The
-evidence says it settled; the documented rule keys on `settle_date` and cannot
-confirm it. It is left **open** and escalated: carrying it open overstates open
-FX delta by 12.0m USD, and retiring it on inference understates it by the same.
-That is a decision for the desk, not for a loader.
-
-**The daily P&L convention.** Market moves telescope in the currency they occur
-in, but not once each day is converted at its own rate. The series therefore
-reports the change in the mark, which is what a USD-reporting desk is
-accountable for and keeps the chart and the summary card consistent. Summing
-daily conversions instead would give the trading move excluding revaluation of
-prior P&L — a different, equally valid figure, and about 2,200 USD apart on the
-equity book.
-
-**KOSPI 200 multiplier.** Every figure here is consistent with 250 KRW/point
-and none with the KRX's actual 250,000. The data wins for this extract, but the
-value must be rechecked before it is used against real KOSPI risk.
-
----
-
-## Known limitations
-
-Deliberate, given this is a prototype:
-
-- **FX forwards and NDFs are marked on spot.** `fx_rates.csv` carries one
-  `spot_rate` per pair per day and nothing else — no forward points, no tenor
-  curve — so the rate differential between the two legs cannot be marked and
-  is absent from the figure. Six term trades are valued this way and they
-  carry **267k USD, about 60% of the desk total**, which is why this is the
-  first limitation listed rather than a footnote. The error is the *change* in
-  the forward points over the holding period, not the points themselves: both
-  the reference and the current level are spot, so carry that does not move
-  cancels. Closing it needs a forward curve the extract does not contain.
-- No database, no auth, no Docker. Two commands to run is the point.
-- Pricing iterates row-wise rather than vectorised. At 40 trades over 24 days
-  the cost is invisible, and five readable pricing functions are worth more
-  here than a faster one nobody can check.
-- The P&L is a mark-to-market against traded and published levels. There is no
-  accrual, no funding, and no intraday.
-- Option risk is taken from the pricing library as published; nothing is
-  re-priced from a volatility surface.
+**Detail:** [Design decisions and architecture](docs/DESIGN.md) ·
+[What the extracts turned out to contain](docs/DATA.md) — the 32 findings in
+full, four things found beyond the brief, three questions left open for the
+desk.
