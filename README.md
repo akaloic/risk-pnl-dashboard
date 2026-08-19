@@ -48,17 +48,18 @@ source .venv/bin/activate && python -m pytest
 cd frontend && npm test
 ```
 
-178 backend tests and 30 on the front end, and they pass on a fresh clone
+180 backend tests and 40 on the front end, and they pass on a fresh clone
 **with no `data/` directory at all**: the suite runs against hand-written
 fixtures in `tests/fixtures/` that reproduce every quirk found in the real
 extracts. That is deliberate — the real files are confidential and are not in
 this repository.
 
 The frontend tests cover the pure logic only — axis scaling, formatting, the
-series aggregation and the curve pivot — not the rendering. Those four are
-where a wrong answer is silent: a mis-scaled axis, a mis-grouped total, a
-mis-rounded figure and a curve sorted `0-1Y, 10Y+, 1-3Y` all draw a screen that
-looks entirely normal.
+series aggregation, the curve pivot and the leg grouping — not the rendering.
+Those are where a wrong answer is silent: a mis-scaled axis, a mis-grouped
+total, a mis-rounded figure, a curve sorted `0-3M, 10Y+, 1-3Y` and a hedged
+position read as two losing trades all draw a screen that looks entirely
+normal.
 
 ---
 
@@ -137,7 +138,17 @@ net to almost nothing while carrying real exposure to the shape. RATES-ASIA-01
 is exactly that: a total of 6,442 USD that is actually short the front and the
 belly and long the 5-10Y point. Buckets come from each trade's own
 `maturity_date` rather than from parsing an instrument id, and their order is
-carried as data — sorted as text, `10Y+` lands between `0-1Y` and `1-3Y`.
+carried as data — sorted as text, `10Y+` lands between `0-3M` and `1-3Y`.
+
+**The front of the curve is split at three months, not at a year.** A single
+0-1Y bucket held 17 trades maturing anywhere from 22 to 309 days out, and 16 of
+those 17 fall inside 60 days. Splitting it says what the desk actually looks
+like: **100% of the equity derivatives book and 100% of the FX book mature
+within three months**, carrying 396k USD of the 444k loss, while the rates
+position that shared the old bucket sits at 3-12M. Rows where most of the gross
+exposure is near-term are marked `rolls off` on screen — measured gross rather
+than net, because a front-end long against a far short cancels to zero and
+still rolls off.
 
 **A trade is not a position.** The P&L table sorts by size, so the two largest
 lines in EQD-ASIA-01 were TRD-034 at −113k and TRD-039 at +103k — both Nikkei

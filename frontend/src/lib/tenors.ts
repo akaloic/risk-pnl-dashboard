@@ -6,7 +6,7 @@
  * API sends one row per cell, so the pivot happens here.
  *
  * Column order is the one thing that must not be got wrong. Sorted as strings,
- * "10Y+" lands between "0-1Y" and "1-3Y" and the curve reads back to front, so
+ * "10Y+" lands between "0-3M" and "1-3Y" and the curve reads back to front, so
  * the order is declared rather than derived. It mirrors the backend's own
  * _TENOR_BUCKETS; a bucket the backend adds without this list knowing about it
  * is appended rather than dropped, so a new point shows up out of order instead
@@ -16,7 +16,7 @@
 import type { TenorExposure } from "../api/types";
 
 /** Past first, then along the curve. Mirrors `_TENOR_BUCKETS` in risk.py. */
-const CURVE_ORDER = ["Matured", "0-1Y", "1-3Y", "3-5Y", "5-10Y", "10Y+"];
+const CURVE_ORDER = ["Matured", "0-3M", "3-12M", "1-3Y", "3-5Y", "5-10Y", "10Y+"];
 
 export interface CurveRow {
   book: string;
@@ -58,6 +58,26 @@ export function pivotByTenor(exposures: TenorExposure[]): CurveGrid {
   const buckets = [...seen].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
 
   return { buckets, rows: [...rows.values()] };
+}
+
+/** Buckets that are gone or nearly gone: exposure the desk is about to lose. */
+const NEAR_TERM = ["Matured", "0-3M"];
+
+/**
+ * Share of a row's gross exposure sitting inside three months.
+ *
+ * Gross rather than net on purpose: a row that is long 5m at the front and
+ * short 5m further out nets to nothing and still has all of its front-end
+ * exposure rolling off. Netting first would report that row as 0% near-term.
+ */
+export function nearTermShare(row: CurveRow): number {
+  let near = 0;
+  let gross = 0;
+  for (const [bucket, value] of row.cells) {
+    gross += Math.abs(value);
+    if (NEAR_TERM.includes(bucket)) near += Math.abs(value);
+  }
+  return gross === 0 ? 0 : near / gross;
 }
 
 /**

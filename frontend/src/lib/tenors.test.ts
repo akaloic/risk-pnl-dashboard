@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TenorExposure } from "../api/types";
-import { isCurvePosition, pivotByTenor } from "./tenors";
+import { isCurvePosition, nearTermShare, pivotByTenor } from "./tenors";
 
 const cell = (
   book: string,
@@ -18,15 +18,15 @@ const cell = (
 describe("pivotByTenor", () => {
   it("orders the columns along the curve, not alphabetically", () => {
     // The failure this exists to prevent: sorted as text, "10Y+" lands between
-    // "0-1Y" and "1-3Y" and the curve reads back to front.
+    // "0-3M" and "1-3Y" and the curve reads back to front.
     const { buckets } = pivotByTenor([
       cell("RATES-ASIA-01", "DV01", "10Y+", 1),
-      cell("RATES-ASIA-01", "DV01", "0-1Y", 1),
+      cell("RATES-ASIA-01", "DV01", "0-3M", 1),
       cell("RATES-ASIA-01", "DV01", "5-10Y", 1),
       cell("RATES-ASIA-01", "DV01", "1-3Y", 1),
     ]);
 
-    expect(buckets).toEqual(["0-1Y", "1-3Y", "5-10Y", "10Y+"]);
+    expect(buckets).toEqual(["0-3M", "1-3Y", "5-10Y", "10Y+"]);
   });
 
   it("puts Matured ahead of the live curve", () => {
@@ -49,11 +49,11 @@ describe("pivotByTenor", () => {
     // Appended rather than dropped: an unknown point shows up out of order,
     // which is visible, instead of vanishing out of a total, which is not.
     const { buckets, rows } = pivotByTenor([
-      cell("A", "DV01", "0-1Y", 100),
+      cell("A", "DV01", "0-3M", 100),
       cell("A", "DV01", "30Y+", 900),
     ]);
 
-    expect(buckets).toEqual(["0-1Y", "30Y+"]);
+    expect(buckets).toEqual(["0-3M", "30Y+"]);
     expect(rows[0].total).toBe(1_000);
   });
 
@@ -96,5 +96,51 @@ describe("isCurvePosition", () => {
     ]);
 
     expect(isCurvePosition(rows[0])).toBe(false);
+  });
+});
+
+describe("nearTermShare", () => {
+  it("reports the share of gross exposure inside three months", () => {
+    const { rows } = pivotByTenor([
+      cell("EQD-ASIA-01", "Delta_USD", "0-3M", 37_924_168),
+    ]);
+
+    expect(nearTermShare(rows[0])).toBe(1);
+  });
+
+  it("counts Matured as near-term, because it is already gone", () => {
+    const { rows } = pivotByTenor([
+      cell("FX-ASIA-01", "Delta_USD", "Matured", 12_000_000),
+      cell("FX-ASIA-01", "Delta_USD", "0-3M", 6_610_500),
+    ]);
+
+    expect(nearTermShare(rows[0])).toBe(1);
+  });
+
+  it("measures gross, so an offsetting far leg does not hide the roll-off", () => {
+    // Netting first would report this row as having no near-term exposure at
+    // all, when in fact half of it disappears within the quarter.
+    const { rows } = pivotByTenor([
+      cell("A", "DV01", "0-3M", 5_000),
+      cell("A", "DV01", "5-10Y", -5_000),
+    ]);
+
+    expect(rows[0].total).toBe(0);
+    expect(nearTermShare(rows[0])).toBe(0.5);
+  });
+
+  it("is zero for a book positioned further out", () => {
+    const { rows } = pivotByTenor([
+      cell("RATES-ASIA-01", "DV01", "3-12M", -202),
+      cell("RATES-ASIA-01", "DV01", "5-10Y", 7_848),
+    ]);
+
+    expect(nearTermShare(rows[0])).toBe(0);
+  });
+
+  it("does not divide by zero on a row of zeroes", () => {
+    const { rows } = pivotByTenor([cell("A", "DV01", "0-3M", 0)]);
+
+    expect(nearTermShare(rows[0])).toBe(0);
   });
 });

@@ -40,22 +40,30 @@ from app.positions import settled_trade_ids
 # Units that represent an amount of money, and so may be added together.
 _ADDITIVE_UNITS = {"amount", "amount_usd"}
 
-# Standard curve buckets, in curve order, with an inclusive upper bound in
-# whole calendar years: a five-year swap belongs to 3-5Y, not 5-10Y. The order
-# is carried as data rather than left to the label, because sorting these as
+# Curve buckets, in curve order, with an inclusive upper bound in whole
+# calendar months: a five-year swap belongs to 3-5Y, not 5-10Y. The order is
+# carried as data rather than left to the label, because sorting these as
 # strings puts "10Y+" second and hands a risk manager a curve that runs
-# 0-1, 10+, 1-3.
+# 0-3M, 10Y+, 1-3Y.
 #
-# `None` is the open end. Bounds are whole years so the boundary can be walked
-# on the calendar rather than divided out of a day count: ten years from
-# 2026-08-05 is 3,653 days, which over 365.25 gives 10.0014 and drops a plain
-# 10Y swap into 10Y+. A trade maturing on its own anniversary has to land in
-# the bucket that anniversary names.
+# `None` is the open end. Bounds are walked on the calendar rather than divided
+# out of a day count: ten years from 2026-08-05 is 3,653 days, which over
+# 365.25 gives 10.0014 and drops a plain 10Y swap into 10Y+. A trade maturing
+# on its own anniversary has to land in the bucket that anniversary names.
+#
+# The front of the curve is split at three months because a single 0-1Y bucket
+# was hiding the largest fact about this desk. It held 17 trades maturing
+# anywhere from 22 to 309 days out -- the entire FX book and the entire equity
+# derivatives book -- and 16 of those 17 fall inside 60 days, carrying 396k USD
+# of the desk's 444k loss. A bucket that puts "expires in three weeks" beside
+# "expires in eleven months" answers the question it was built to answer and
+# still leaves a risk manager blind to the roll-off in front of them.
 _TENOR_BUCKETS: tuple[tuple[str, int | None], ...] = (
-    ("0-1Y", 1),
-    ("1-3Y", 3),
-    ("3-5Y", 5),
-    ("5-10Y", 10),
+    ("0-3M", 3),
+    ("3-12M", 12),
+    ("1-3Y", 36),
+    ("3-5Y", 60),
+    ("5-10Y", 120),
     ("10Y+", None),
 )
 
@@ -80,8 +88,8 @@ def tenor_bucket(maturity: pd.Timestamp, as_of: date) -> str:
     if maturity <= today:
         return _MATURED
 
-    for label, years in _TENOR_BUCKETS:
-        if years is None or maturity <= today + pd.DateOffset(years=years):
+    for label, months in _TENOR_BUCKETS:
+        if months is None or maturity <= today + pd.DateOffset(months=months):
             return label
     raise AssertionError("the last bucket is open-ended, so the loop always returns")
 

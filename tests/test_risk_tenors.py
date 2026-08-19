@@ -25,8 +25,10 @@ def data():
     [
         ("2026-08-04", "Matured"),
         ("2026-08-05", "Matured"),
-        ("2026-09-01", "0-1Y"),
-        ("2027-08-05", "0-1Y"),
+        ("2026-09-01", "0-3M"),
+        ("2026-11-05", "0-3M"),
+        ("2026-11-06", "3-12M"),
+        ("2027-08-05", "3-12M"),
         ("2027-08-06", "1-3Y"),
         ("2029-08-05", "1-3Y"),
         ("2029-08-06", "3-5Y"),
@@ -51,7 +53,7 @@ def test_a_maturity_lands_in_the_bucket_that_ends_on_it(maturity, expected):
 def test_a_trade_already_past_maturity_is_not_folded_into_the_front_bucket():
     """Matured is its own bucket because a figure there is a finding.
 
-    Dropping it into 0-1Y would present exposure that has expired as the
+    Dropping it into 0-3M would present exposure that has expired as the
     nearest live point on the curve.
     """
     assert tenor_bucket(pd.Timestamp("2026-07-29"), AS_OF) == "Matured"
@@ -72,8 +74,8 @@ def test_the_split_adds_back_to_the_book_grid(data):
 
 
 def test_buckets_come_back_in_curve_order_not_alphabetical(data):
-    """Sorted as text, 10Y+ falls between 0-1Y and 1-3Y and the curve reads wrong."""
-    order = ["Matured", "0-1Y", "1-3Y", "3-5Y", "5-10Y", "10Y+"]
+    """Sorted as text, 10Y+ falls between 0-3M and 1-3Y and the curve reads wrong."""
+    order = ["Matured", "0-3M", "3-12M", "1-3Y", "3-5Y", "5-10Y", "10Y+"]
     by_tenor = risk_by_tenor(data, as_of=AS_OF)
 
     for _, rows in by_tenor.groupby(["book_id", "risk_metric"], sort=False):
@@ -104,13 +106,13 @@ def test_one_metric_spreads_across_the_buckets_its_trades_mature_in(data):
     """The reason the view exists: a single total covers several points.
 
     Delta_USD in the fixtures spans a matured spot and a run of trades inside
-    the year, and the book grid reports the two as one number.
+    the quarter, and the book grid reports the two as one number.
     """
     delta = risk_by_tenor(data, as_of=AS_OF)
     delta = delta[delta["risk_metric"] == "Delta_USD"]
 
     assert len(delta) > 1
-    assert set(delta["tenor_bucket"]) == {"Matured", "0-1Y"}
+    assert set(delta["tenor_bucket"]) == {"Matured", "0-3M"}
 
 
 def test_an_unconfirmed_settlement_surfaces_as_matured_risk(data):

@@ -14,7 +14,7 @@
 import { useMemo } from "react";
 import type { RiskResponse } from "../api/types";
 import { level, plain, signOf, usd } from "../lib/format";
-import { isCurvePosition, pivotByTenor } from "../lib/tenors";
+import { isCurvePosition, nearTermShare, pivotByTenor } from "../lib/tenors";
 
 export function RiskGrid({ risk }: { risk: RiskResponse }) {
   const settledTotal = risk.by_book.reduce((sum, row) => sum + row.settled_usd, 0);
@@ -97,6 +97,11 @@ export function RiskGrid({ risk }: { risk: RiskResponse }) {
                   <td>
                     {row.metric}
                     {isCurvePosition(row) && <span className="curve-flag">curve</span>}
+                    {nearTermShare(row) >= 0.5 && (
+                      <span className="roll-flag">
+                        rolls off · {Math.round(nearTermShare(row) * 100)}% ≤3M
+                      </span>
+                    )}
                   </td>
                   {curve.buckets.map((bucket) => {
                     const value = row.cells.get(bucket);
