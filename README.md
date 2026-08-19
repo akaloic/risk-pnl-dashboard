@@ -48,19 +48,27 @@ source .venv/bin/activate && python -m pytest
 cd frontend && npm test
 ```
 
-180 backend tests and 57 on the front end, and they pass on a fresh clone
+180 backend tests and 104 on the front end, and they pass on a fresh clone
 **with no `data/` directory at all**: the suite runs against hand-written
 fixtures in `tests/fixtures/` that reproduce every quirk found in the real
 extracts. That is deliberate — the real files are confidential and are not in
 this repository.
 
-The frontend tests cover the pure logic only — axis scaling, formatting, the
-series aggregation, the curve pivot, the leg grouping, the sort order and the
-emphasis rule — not the rendering.
-Those are where a wrong answer is silent: a mis-scaled axis, a mis-grouped
-total, a mis-rounded figure, a curve sorted `0-3M, 10Y+, 1-3Y` and a hedged
-position read as two losing trades all draw a screen that looks entirely
-normal.
+They split in two. Seven pure modules — axis scaling, formatting, the series
+aggregation, the curve pivot, the leg grouping, the sort order and the emphasis
+rule — are tested without a DOM, because that is where a wrong answer is
+silent: a mis-scaled axis, a mis-grouped total, a curve sorted
+`0-3M, 10Y+, 1-3Y` and a hedged position read as two losing trades all draw a
+screen that looks entirely normal.
+
+All eight components are then rendered and driven, which is what stops a
+correct function from being asked the wrong question. Those tests assert what
+the screen has to say rather than how it is built: that a badge claiming a book
+rolls off never appears on a book holding far-dated risk, that the two legs of
+one instrument show their net, that a large short sorts alongside a large long
+instead of below every long, that the panel never shows a finding without its
+treatment, and that a failed request surfaces the backend's own explanation
+rather than replacing it with a status code.
 
 ---
 
