@@ -7,11 +7,10 @@ replayable day by day.
 
 ```mermaid
 flowchart LR
-  CSV["4 CSV extracts"] --> loaders --> dq --> positions
-  positions --> pnl --> analytics --> api["FastAPI"]
+  CSV["4 CSV extracts"] --> ingest["loaders + dq"] --> positions
+  positions --> pnl --> analytics --> api["FastAPI"] --> ui["React screen"]
   positions --> risk --> api
   positions --> counterparty --> api
-  api --> ui["React screen"]
 ```
 
 Dependencies run one way only. Every engine is testable without starting a web
