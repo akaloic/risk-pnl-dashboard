@@ -25,7 +25,7 @@ flowchart TD
   positions --> risk --> api
   positions --> counterparty --> api
   api --> ui["React screen"]
-  api -. "recorded to disk,<br/>which is what the link serves" .-> ui
+  api -. "recorded to disk" .-> ui
 ```
 
 Dependencies run one way only, and every engine is testable without starting a
