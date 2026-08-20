@@ -1,0 +1,99 @@
+# Tests on every push, and a published screen when they pass on main.
+#
+# The deploy job needs both suites green before it runs: the site it publishes
+# is the only copy most readers will ever see, so it should never be one that
+# the tests would have rejected.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time, and never cancel one halfway: a cancelled Pages
+# deployment leaves the site serving a half-uploaded build.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  backend:
+    name: backend (pytest, ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt ruff==0.16.3
+      - run: ruff check .
+      # No data/ directory exists here, which is the point: the suite runs off
+      # hand-written fixtures and must never need the real extracts.
+      - run: python -m pytest -q
+
+  frontend:
+    name: frontend (vitest, tsc, oxlint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx tsc -b
+      - run: npm run lint
+      - run: npm test
+
+  deploy:
+    name: publish the screen
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      # Runs the real API over the demo desk and writes down every answer, so
+      # the published screen reads the engines' own output rather than a mock.
+      - run: python scripts/export_static_api.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+        env:
+          # A project site lives under /<repo>/, and the recorded API is
+          # fetched relative to it, so both have to know the prefix.
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_STATIC_API: "1"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
