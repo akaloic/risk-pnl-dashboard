@@ -17,11 +17,14 @@ venv/
 # Node / frontend
 frontend/node_modules/
 frontend/dist/
+# Written by scripts/export_static_api.py at build time, from demo-data/.
+frontend/public/api/
 frontend/.vite/
 npm-debug.log*
 
 # Editors / OS
 .DS_Store
 .vscode/
+.claude/
 .idea/
 *.swp
