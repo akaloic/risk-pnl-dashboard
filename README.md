@@ -1,9 +1,22 @@
 # Risk & P&L — Asia cross-asset desk
 
+[![CI](https://github.com/akaloic/risk-pnl-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/akaloic/risk-pnl-dashboard/actions/workflows/ci.yml)
+
 A working risk and P&L tool for four books out of Asia — rates, credit, FX and
 equity derivatives — built on extracts from the desk's source systems.
 Reporting currency **USD**, as of **2026-08-05**, with the whole month
 replayable day by day.
+
+## ▶ [Open the screen](https://akaloic.github.io/risk-pnl-dashboard/) — nothing to install
+
+The desk in it is invented. The extracts this was written for are confidential,
+and a figure derived from them is no more publishable than the file it came
+from, so the published screen runs on a synthetic desk instead. The engines
+underneath are the ones in this repository, unchanged.
+
+[![Desk summary](docs/screenshots/01-desk-summary.png)](https://akaloic.github.io/risk-pnl-dashboard/)
+
+## How it fits together
 
 ```mermaid
 flowchart LR
@@ -11,100 +24,17 @@ flowchart LR
   positions --> pnl --> analytics --> api["FastAPI"] --> ui["React screen"]
   positions --> risk --> api
   positions --> counterparty --> api
+  api -. "every answer written<br/>to disk at build time" .-> pages["the link above"]
 ```
 
-Dependencies run one way only. Every engine is testable without starting a web
-server, which is why the numbers can be checked without the screen.
+Dependencies run one way only, and every engine is testable without starting a
+web server — which is why the numbers can be checked without the screen.
 
-## Run it
-
-**Python 3.11–3.14, Node 18+.** Two terminals.
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate && pip install -r backend/requirements.txt
-```
-
-```bash
-cd frontend && npm install
-```
-
-**With the extracts** — drop `trades.csv`, `market_data.csv`,
-`risk_sensitivities.csv` and `fx_rates.csv` into `data/`. They are gitignored
-and never committed.
-
-```bash
-PYTHONPATH=backend uvicorn app.main:app --reload
-```
-
-**Or on the demo desk.** `demo-data/` holds an invented one, which exists so
-the screenshots below can show a working screen without publishing a single
-real figure. It also means the app starts on a fresh clone:
-
-```bash
-RAD_DATA_DIR=demo-data PYTHONPATH=backend uvicorn app.main:app --reload
-```
-
-Either way, start the screen with `cd frontend && npm run dev` and open
-<http://localhost:5173>. API docs at <http://localhost:8000/docs>.
-
-**Tests:** `python -m pytest` and `cd frontend && npm test` — 189 + 124, and
-they pass on a fresh clone **with no `data/` directory at all**, against
-hand-written fixtures that reproduce the real quirks.
-
-## What it looks like
-
-All of them are the demo desk: invented books, invented counterparties, not one
-figure derived from the extracts. That is the point of `demo-data/` — the real
-screen names the counterparties the desk faces and what each owes, which is not
-something to commit. Regenerate with `scripts/make_demo_data.py` and
-`scripts/take_screenshots.py`.
-
-**Desk summary** — where each book stands, what moved overnight, and whether it
-is a position we still have. `rolls off ≤3M` marks a book whose every risk
-metric matures inside the quarter.
-
-![Desk summary](docs/screenshots/01-desk-summary.png)
-
-**Drill-down** — the trades behind a figure, biggest first, with the levels
-each was computed from. `leg` marks lines that share an
-instrument and are one position: read separately, DEM-021 looks like a 89k
-loss, and it is half of a position that made 14k.
-
-![P&L by trade](docs/screenshots/02-trade-detail.png)
-
-**Risk** — what the desk is exposed to and where on the curve it sits. Settled
-exposure stays visible beside open, and `curve` marks a row holding exposure on
-both sides of zero.
-
-![Risk](docs/screenshots/04-risk.png)
-
-**Counterparty** — who the desk faces, ranked by what a default would cost
-rather than by notional, which is a different ordering.
-
-![Counterparty exposure](docs/screenshots/05-counterparty.png)
-
-**Data quality** — what was wrong with the extracts, and what the tool did
-about each of it.
-
-![Data quality](docs/screenshots/06-data-quality.png)
-
-And [Positions](docs/screenshots/03-positions.png): what is held, netted by
-book and instrument, with what has settled still on show.
-
-## Nothing is repaired silently
-
-```mermaid
-flowchart LR
-  D["defect found"] --> Q{"repairable without<br/>guessing?"}
-  Q -->|yes| R["repair, record the treatment"]
-  Q -->|no| E["escalate untreated, record why"]
-  R --> P["DQ panel"]
-  E --> P
-```
-
-**32 findings** on this extract — 5 errors, 23 warnings, 4 benign — each shown
-with what the tool did about it. A figure a trader disputes at 07:30 is only
-useful if we can say exactly what changed underneath it.
+That dashed arrow is how a tool with a Python backend is one click away: Pages
+serves files and runs nothing, so the build drives the real API and records
+what it says, one directory per business day. The published screen reads a
+recording of the API, not a mock of it — change a route and the recording
+changes with it.
 
 ## The three things the data hid
 
@@ -122,6 +52,60 @@ carry a spot-leg `settle_date` while running to maturity a month later.
 **Notional is not exposure, and it is not even comparable.** Summed raw across
 JPY, KRW and USD, one counterparty is 61% of the book and first by a distance;
 in USD it is 9.4% and sixth; by what a default would actually cost, 4.5%.
+
+![Counterparty exposure](docs/screenshots/05-counterparty.png)
+
+## Nothing is repaired silently
+
+```mermaid
+flowchart LR
+  D["defect found"] --> Q{"repairable without<br/>guessing?"}
+  Q -->|yes| R["repair, record the treatment"]
+  Q -->|no| E["escalate untreated, record why"]
+  R --> P["quality panel"]
+  E --> P
+```
+
+**32 findings** on this extract — 5 errors, 23 warnings, 4 benign — each shown
+with what the tool did about it. A figure a trader disputes at 07:30 is only
+useful if we can say exactly what changed underneath it.
+
+![Data quality](docs/screenshots/06-data-quality.png)
+
+## The rest of the screen
+
+**[Drill-down](docs/screenshots/02-trade-detail.png)** — the trades behind a
+figure, biggest first. `leg` marks lines that share an instrument and are one
+position: read separately, DEM-021 looks like an 89k loss, and it is half of a
+position that made 14k.
+
+**[Risk](docs/screenshots/04-risk.png)** — what the desk is exposed to and
+where on the curve it sits, settled exposure kept beside open, with `curve`
+marking a row holding exposure on both sides of zero.
+
+**[Positions](docs/screenshots/03-positions.png)** — what is held, netted by
+book and instrument.
+
+## Run it on the real extracts
+
+**Python 3.11–3.14, Node 18+.** Drop `trades.csv`, `market_data.csv`,
+`risk_sensitivities.csv` and `fx_rates.csv` into `data/` — gitignored, never
+committed — then, in two terminals:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate && pip install -r backend/requirements.txt && PYTHONPATH=backend uvicorn app.main:app --reload
+```
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+<http://localhost:5173>, with API docs at <http://localhost:8000/docs>. Swap
+in the synthetic desk with `RAD_DATA_DIR=demo-data` on the first command.
+
+**Tests:** `python -m pytest` and `cd frontend && npm test` — 189 + 135, and
+they pass on a fresh clone **with no `data/` directory at all**, against
+hand-written fixtures that reproduce the real quirks.
 
 ## What it does not do
 

@@ -1,12 +1,12 @@
-"""Generate a synthetic desk, so the screenshots can show one.
+"""Generate a synthetic desk, because the published screen has to show one.
 
-The README needs pictures -- a reader decides whether to run any of this in
-about ten seconds -- and a screenshot of the real screen names the
-counterparties the desk faces and what each of them owes. Those files are
-confidential, and a figure derived from them is no more publishable than the
-file itself. So the screens in the README are drawn from a desk that does not
-exist: four books, twenty-five trades across the five product classes, a month
-of business days, and the same column layout the extracts use.
+A reader decides whether to run any of this in about ten seconds, so the tool
+is published as a link and the README shows pictures. Both point at a real
+screen, and the real screen names the counterparties the desk faces and what
+each of them owes. Those files are confidential, and a figure derived from them
+is no more publishable than the file itself. So what is published is a desk
+that does not exist: four books, twenty-five trades across the five product
+classes, a month of business days, and the same column layout the extracts use.
 
 Starting on a fresh clone falls out of it, which is worth having but is not why
 this exists. Anyone reviewing this already has the extracts.
@@ -23,6 +23,7 @@ screenshots in the README stay true.
 
     python scripts/make_demo_data.py        # writes demo-data/
     RAD_DATA_DIR=demo-data uvicorn app.main:app
+    python scripts/export_static_api.py     # what the published link reads
 """
 
 import csv

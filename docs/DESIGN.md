@@ -161,6 +161,31 @@ it covers, rather than a partial answer.
 
 ---
 
+## Publishing the screen
+
+GitHub Pages serves files and runs no processes, so the deployed screen cannot
+call a Python backend. `scripts/export_static_api.py` drives the real FastAPI
+app through its own test client and writes down every answer it gives: one
+directory per business day, so the date picker still works, plus `latest/` for
+the call that names no date. The frontend then differs in one place only —
+`api/urls.ts` turns a path and a date into either `/pnl?as_of=D` or
+`api/D/pnl.json`, and nothing above it knows there are two modes.
+
+Two consequences worth stating. The published screen reads a **recording** of
+the API rather than a mock of it, so a route that changes shape changes the
+recording with it and the two cannot drift. And the export refuses to read
+`data/`: its output is built to be published, and a flag to override that would
+only ever be set by mistake. What is published is the synthetic desk from
+`demo-data/`, which the screen's own header says out loud.
+
+The one failure that lives only in production is the base path — a project
+site is served under `/<repo>/`, and both the asset URLs and the recorded API
+are fetched relative to it. It is a config value read by the deploy workflow,
+and it is covered by a test, because getting it wrong is invisible everywhere
+the tests normally run.
+
+---
+
 ## Tests
 
 ```bash
@@ -171,18 +196,18 @@ source .venv/bin/activate && python -m pytest
 cd frontend && npm test
 ```
 
-189 backend tests and 124 on the front end, and they pass on a fresh clone
+189 backend tests and 135 on the front end, and they pass on a fresh clone
 **with no `data/` directory at all**: the suite runs against hand-written
 fixtures in `tests/fixtures/` that reproduce every quirk found in the real
 extracts. That is deliberate — the real files are confidential and are not in
 this repository.
 
-They split in two. Seven pure modules — axis scaling, formatting, the series
-aggregation, the curve pivot, the leg grouping, the sort order and the emphasis
-rule — are tested without a DOM, because that is where a wrong answer is
-silent: a mis-scaled axis, a mis-grouped total, a curve sorted
-`0-3M, 10Y+, 1-3Y` and a hedged position read as two losing trades all draw a
-screen that looks entirely normal.
+They split in two. Eight pure modules — axis scaling, formatting, the series
+aggregation, the curve pivot, the leg grouping, the sort order, the emphasis
+rule and URL resolution — are tested without a DOM, because that is where a
+wrong answer is silent: a mis-scaled axis, a mis-grouped total, a curve sorted
+`0-3M, 10Y+, 1-3Y`, a hedged position read as two losing trades and a build
+that 404s only once deployed all draw a screen that looks entirely normal.
 
 All nine components are then rendered and driven, which is what stops a
 correct function from being asked the wrong question. Those tests assert what
