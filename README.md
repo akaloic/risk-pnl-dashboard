@@ -25,17 +25,17 @@ flowchart TD
   positions --> risk --> api
   positions --> counterparty --> api
   api --> ui["React screen"]
-  api -. "recorded to disk" .-> pages["published link"]
+  api -. "recorded to disk,<br/>which is what the link serves" .-> ui
 ```
 
 Dependencies run one way only, and every engine is testable without starting a
 web server — which is why the numbers can be checked without the screen.
 
 That dashed arrow is how a tool with a Python backend is one click away: Pages
-serves files and runs nothing, so the build drives the real API and records
-what it says, one directory per business day. The published screen reads a
-recording of the API, not a mock of it — change a route and the recording
-changes with it.
+serves files and runs nothing, so the build drives the real API and writes down
+every answer, one directory per business day. The same screen reads either. It
+is a recording of the API rather than a mock of it — change a route and the
+recording changes with it.
 
 ## The three things the data hid
 
