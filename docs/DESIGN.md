@@ -93,9 +93,12 @@ nothing. Exposure is the mark where it is positive and zero where it is not.
 Netting instead would report a relationship the desk is losing on as costing
 nothing to lose — Nomura nets to −149k and would still take 132k out of the desk
 tomorrow. And the notional column has to be converted before it is compared:
-summed as it stands, mixing JPY, KRW and USD, KB Securities is 61% of the book
-and first by a distance; in USD it is 9.4% and sixth; by exposure it is 4.5%.
-Three questions, three orderings, and only one of them is a credit limit.
+summed as it stands, mixing JPY, KRW and USD, KB Securities is 61% of the open
+notional and first by a distance; in USD it is 10% and fifth of nine; by
+exposure it is 4.5%. Three questions, three orderings, and only one of them is a
+credit limit. All three are measured on the trades the engine still considers
+open, so the comparison is between three ways of asking, not between three
+populations.
 
 
 

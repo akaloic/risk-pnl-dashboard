@@ -13,9 +13,9 @@ would have the desk manage the wrong number.
 *Notional has to be converted before it is compared.* The blotter mixes JPY,
 KRW, HKD and USD notionals in one column, and adding them as they stand ranks
 counterparties by the size of their currency's units. Summed raw, KB Securities
-is 61% of the desk's book and first by a distance; converted to USD it is 9.4%
-and sixth. That is not a rounding difference, it is a different list, and the
-raw one would send a credit officer to the wrong counterparty.
+is 61% of the desk's open notional and first by a distance; converted to USD it
+is 10% and fifth of nine. That is not a rounding difference, it is a different
+list, and the raw one would send a credit officer to the wrong counterparty.
 
 *A settled trade has no counterparty.* The cash was exchanged, so nothing is
 owed either way. Settled trades stay counted, separately, because a

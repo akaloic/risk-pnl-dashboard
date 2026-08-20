@@ -51,8 +51,9 @@ date in the past. Settlement ends an FX spot and *starts* a bond. And the NDFs
 carry a spot-leg `settle_date` while running to maturity a month later.
 
 **Notional is not exposure, and it is not even comparable.** Summed raw across
-JPY, KRW and USD, one counterparty is 61% of the book and first by a distance;
-in USD it is 9.4% and sixth; by what a default would actually cost, 4.5%.
+JPY, KRW and USD, one counterparty is 61% of the open notional and first by a
+distance; in USD it is 10% and fifth of nine; by what a default would actually
+cost, 4.5%.
 
 ![Counterparty exposure](docs/screenshots/05-counterparty.png)
 
