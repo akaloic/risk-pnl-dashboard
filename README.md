@@ -19,11 +19,12 @@ underneath are the ones in this repository, unchanged.
 ## How it fits together
 
 ```mermaid
-flowchart LR
+flowchart TD
   CSV["4 CSV extracts"] --> ingest["loaders + dq"] --> positions
-  positions --> pnl --> analytics --> api["FastAPI"] --> ui["React screen"]
+  positions --> pnl --> analytics --> api["FastAPI"]
   positions --> risk --> api
   positions --> counterparty --> api
+  api --> ui["React screen"]
   api -. "recorded to disk" .-> pages["published link"]
 ```
 
@@ -58,10 +59,10 @@ in USD it is 9.4% and sixth; by what a default would actually cost, 4.5%.
 ## Nothing is repaired silently
 
 ```mermaid
-flowchart LR
-  D["defect found"] --> Q{"repairable without<br/>guessing?"}
-  Q -->|yes| R["repair, record the treatment"]
-  Q -->|no| E["escalate untreated, record why"]
+flowchart TD
+  D["defect found"] --> Q{"repairable<br/>without guessing?"}
+  Q -->|yes| R["repair, record<br/>the treatment"]
+  Q -->|no| E["escalate untreated,<br/>record why"]
   R --> P["quality panel"]
   E --> P
 ```
