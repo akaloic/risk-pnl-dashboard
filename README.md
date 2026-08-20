@@ -104,7 +104,7 @@ cd frontend && npm install && npm run dev
 <http://localhost:5173>, with API docs at <http://localhost:8000/docs>. Swap
 in the synthetic desk with `RAD_DATA_DIR=demo-data` on the first command.
 
-**Tests:** `python -m pytest` and `cd frontend && npm test` — 189 + 135, and
+**Tests:** `python -m pytest` and `cd frontend && npm test` — 189 + 136, and
 they pass on a fresh clone **with no `data/` directory at all**, against
 hand-written fixtures that reproduce the real quirks.
 

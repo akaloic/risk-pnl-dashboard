@@ -148,6 +148,20 @@ a combo box with no accessible name, and the summary cards jumped from `h1` to
 fragment — an assertion helper that quietly stops asserting passes every test
 it is in, and reads as evidence.
 
+**Only the prose table is rebuilt for a narrow window.** Every other table here
+is a numeric grid, and a grid that scrolls sideways stays readable: the columns
+keep their width and the reader moves to them. The findings table is two
+paragraphs of prose in five columns, so the same treatment squeezed them to
+about a hundred pixels each, pushed rows to nearly two hundred pixels tall, and
+left the finding itself off the right edge — the panel that makes every other
+number defensible was the one panel a phone could not show. Below 1024px each
+finding becomes a block instead. The breakpoint is measured, not picked: the
+identifier columns take a fixed 520px whatever the window, so at 1024px the two
+paragraphs get 210px each and a finding runs to three lines, and at 900px they
+get 150px and it runs to five. Which cells stack is read off their
+`data-label`, not off column positions, so one rule also serves the
+reconciliation breaks, which have three columns rather than five.
+
 ---
 
 ## Endpoints
@@ -196,7 +210,7 @@ source .venv/bin/activate && python -m pytest
 cd frontend && npm test
 ```
 
-189 backend tests and 135 on the front end, and they pass on a fresh clone
+189 backend tests and 136 on the front end, and they pass on a fresh clone
 **with no `data/` directory at all**: the suite runs against hand-written
 fixtures in `tests/fixtures/` that reproduce every quirk found in the real
 extracts. That is deliberate — the real files are confidential and are not in
