@@ -246,6 +246,79 @@ tbody tr:hover { background: rgba(74, 158, 255, 0.06); }
   overflow: auto;
 }
 
+/* The findings table below desk width.
+ *
+ * Every other table here is a numeric grid, and a grid that scrolls sideways
+ * is still readable -- the columns keep their width and you move to them. This
+ * one is two paragraphs of prose in five columns, so the same treatment gives
+ * hundred-pixel ribbons, rows nearly two hundred pixels tall, and the finding
+ * itself off the right edge. Each finding becomes a block instead: severity
+ * and check as a heading, then what was found and what was done about it, one
+ * under the other and both on screen.
+ *
+ * The breakpoint is where the prose columns stop being readable, measured
+ * rather than picked: the identifiers take a fixed 520px whatever the window,
+ * so what is left over is split between the two paragraphs. At 1024px they get
+ * 210px each and a finding runs to three lines; at 900px they get 150px and it
+ * runs to five. Below 1024, blocks.
+ */
+@media (max-width: 1023px) {
+  .findings {
+    /* One scrolling region inside another is miserable on a phone, and the
+       blocks are tall enough that the outer page should carry them. */
+    max-height: none;
+    overflow: visible;
+  }
+
+  .findings thead {
+    display: none;
+  }
+
+  .findings table,
+  .findings tbody,
+  .findings tr,
+  .findings td {
+    display: block;
+  }
+
+  .findings tr {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 11px 13px;
+    margin-bottom: 10px;
+  }
+
+  .findings td {
+    border: 0;
+    padding: 0;
+  }
+
+  /* Which cells are which is read off the labels rather than off their
+     position, so the same rule serves the reconciliation breaks, which have
+     three columns rather than five. An unlabelled cell is a short identifier
+     -- a severity badge, a check name, an entity -- and those read as one
+     heading line. A labelled cell is prose, and gets its own block. */
+  .findings td:not([data-label]) {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 9px;
+  }
+
+  .findings td[data-label] {
+    margin-top: 11px;
+  }
+
+  .findings td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--muted);
+  }
+}
+
 .tag {
   display: inline-block;
   padding: 1px 7px;

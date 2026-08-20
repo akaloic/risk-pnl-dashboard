@@ -48,6 +48,28 @@ describe("DataQualityPanel", () => {
     expect(bodyRows()).toHaveLength(3);
   });
 
+  it("names the prose columns on the cells, for when the header row is gone", () => {
+    // Below desk width the findings stack into blocks and the header row is
+    // hidden, so a cell's data-label is the only thing naming it. The two
+    // columns that need it are the two that look alike: a paragraph of what
+    // was found and a paragraph of what was done about it. Unlabelled, the
+    // panel stops making the one distinction it exists to make.
+    render(<DataQualityPanel quality={report()} />);
+
+    const columns = within(screen.getByRole("table"))
+      .getAllByRole("columnheader")
+      .map((header) => header.textContent);
+    const cells = [...bodyRows()[0].children];
+
+    expect(cells.filter((cell) => cell.hasAttribute("data-label"))).toHaveLength(2);
+    cells.forEach((cell, index) => {
+      const label = cell.getAttribute("data-label");
+      // A label that no longer matches its column heading is worse than none:
+      // it names the value wrongly on the only screen that shows it.
+      if (label !== null) expect(label).toBe(columns[index]);
+    });
+  });
+
   it("reports a clean extract as clean rather than as an empty table", () => {
     render(<DataQualityPanel quality={report({ counts: {}, issues: [] })} />);
 

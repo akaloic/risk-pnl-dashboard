@@ -18,29 +18,31 @@ export function Reconciliation({ recon }: { recon: ReconciliationResponse }) {
         rates.
       </p>
 
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Book</th>
-            <th scope="col" className="num">Trades</th>
-            <th scope="col" className="num">With risk</th>
-            <th scope="col" className="num">Coverage</th>
-          </tr>
-        </thead>
-        <tbody>
-          {recon.coverage.map((row, index) => {
-            const pct = Number(row.coverage_pct);
-            return (
-              <tr key={`${String(row.book_id)}-${index}`}>
-                <td>{String(row.book_id)}</td>
-                <td className="num">{plain(Number(row.trades))}</td>
-                <td className="num">{plain(Number(row.with_risk))}</td>
-                <td className={`num ${pct === 100 ? "up" : "down"}`}>{pct.toFixed(1)}%</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Book</th>
+              <th scope="col" className="num">Trades</th>
+              <th scope="col" className="num">With risk</th>
+              <th scope="col" className="num">Coverage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recon.coverage.map((row, index) => {
+              const pct = Number(row.coverage_pct);
+              return (
+                <tr key={`${String(row.book_id)}-${index}`}>
+                  <td>{String(row.book_id)}</td>
+                  <td className="num">{plain(Number(row.trades))}</td>
+                  <td className="num">{plain(Number(row.with_risk))}</td>
+                  <td className={`num ${pct === 100 ? "up" : "down"}`}>{pct.toFixed(1)}%</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       <p className="hint" style={{ marginTop: 16 }}>
         {recon.issues.length === 0
@@ -49,24 +51,29 @@ export function Reconciliation({ recon }: { recon: ReconciliationResponse }) {
       </p>
 
       {recon.issues.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Check</th>
-              <th scope="col">Entity</th>
-              <th scope="col">What was found</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recon.issues.map((issue, index) => (
-              <tr key={`${issue.code}-${index}`}>
-                <td style={{ whiteSpace: "nowrap" }}>{issue.code}</td>
-                <td style={{ whiteSpace: "nowrap" }}>{issue.entity_id}</td>
-                <td>{issue.detail}</td>
+        // Same shape as the data quality findings, so the same treatment: this
+        // one had no scrolling wrapper at all, which is why a break long enough
+        // to need it pushed the whole page sideways on a phone.
+        <div className="scroll findings">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Check</th>
+                <th scope="col">Entity</th>
+                <th scope="col">What was found</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {recon.issues.map((issue, index) => (
+                <tr key={`${issue.code}-${index}`}>
+                  <td style={{ whiteSpace: "nowrap" }}>{issue.code}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{issue.entity_id}</td>
+                  <td data-label="What was found">{issue.detail}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

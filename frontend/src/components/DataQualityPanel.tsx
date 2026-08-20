@@ -98,7 +98,12 @@ export function DataQualityPanel({ quality }: { quality: DataQualityResponse }) 
       {issues.length === 0 ? (
         <Empty>Nothing to report at this severity.</Empty>
       ) : (
-      <div className="scroll">
+      // `findings` is what the narrow-screen rule keys off: below desk width
+      // the header row is hidden and each finding becomes its own block, so
+      // the two prose columns stop being hundred-pixel ribbons sitting off the
+      // right edge. The data-labels below are what names them once the header
+      // is gone.
+      <div className="scroll findings">
         <table>
           <thead>
             <tr>
@@ -117,8 +122,10 @@ export function DataQualityPanel({ quality }: { quality: DataQualityResponse }) 
                 </td>
                 <td style={{ whiteSpace: "nowrap" }}>{issue.code}</td>
                 <td style={{ whiteSpace: "nowrap" }}>{issue.entity_id}</td>
-                <td>{issue.detail}</td>
-                <td className="flat">{issue.treatment}</td>
+                <td data-label="What was found">{issue.detail}</td>
+                <td className="flat" data-label="Treatment applied">
+                  {issue.treatment}
+                </td>
               </tr>
             ))}
           </tbody>
