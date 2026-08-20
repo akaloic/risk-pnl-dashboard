@@ -1,5 +1,5 @@
 import { type KeyboardEvent, useCallback, useRef, useState } from "react";
-import { api } from "./api/client";
+import { RECORDED, api } from "./api/client";
 import { CounterpartyGrid } from "./components/CounterpartyGrid";
 import { DataQualityPanel } from "./components/DataQualityPanel";
 import { DeskSummary } from "./components/DeskSummary";
@@ -82,6 +82,16 @@ export default function App() {
           />
         </label>
       </header>
+
+      {/* Said once, at the top, rather than left to be worked out from the book
+          names: the published copy is the only one anybody reaches by accident. */}
+      {RECORDED && (
+        <p className="demo-note">
+          <strong>Demo desk.</strong> Invented books, counterparties and trades. The
+          engines are the ones the tool ships with; the extracts they were written for
+          are confidential and are not published, and nor is anything derived from them.
+        </p>
+      )}
 
       {/* The full tab pattern, not buttons wearing aria-selected: that attribute is
           only valid on a handful of roles, and on a plain button a screen reader is

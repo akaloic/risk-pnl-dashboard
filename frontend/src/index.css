@@ -72,6 +72,24 @@ body {
   margin-top: 3px;
 }
 
+/* A notice, not a warning: it explains the figures rather than distrusting them. */
+.demo-note {
+  margin: 0 0 18px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 5px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.demo-note strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .as-of {
   display: flex;
   align-items: center;
