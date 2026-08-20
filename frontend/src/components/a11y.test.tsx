@@ -3,9 +3,14 @@
  * axe over every component, on what it actually renders.
  *
  * The linter reads the source and catches an attribute that is wrong on sight.
- * It does not catch a role with no container around it, an aria-controls
- * pointing at an id that never renders, or headers that are fine alone and
- * unassociated once the rows arrive. Those are properties of the output.
+ * It does not catch a role with no container around it, or headers that are
+ * fine alone and unassociated once the rows arrive. Those are properties of
+ * the output.
+ *
+ * axe is not the whole answer either. Three of the four tabs pointed their
+ * aria-controls at a panel id that was never in the document, because only the
+ * selected panel was rendered, and axe passed the strip anyway. So the tab
+ * pattern gets its own assertion below rather than being left to the scanner.
  *
  * This project shipped one of them and I missed it twice: `aria-selected` on
  * plain buttons, which is invalid because the attribute is only allowed on a
@@ -190,6 +195,32 @@ describe("accessibility", () => {
     await waitFor(() => expect(screen.getAllByRole("tab")).toHaveLength(4));
 
     await expectNoViolations(container);
+  });
+
+  it("points every tab at a panel that is actually in the document", async () => {
+    // What axe let through. aria-controls has to name an element that exists,
+    // and with only the selected panel rendered, three of the four named
+    // nothing. The panels now stay mounted and empty, hidden rather than
+    // removed, so the reference holds whichever tab is open.
+    mockApi.pnl.mockResolvedValue(pnlResponse());
+    mockApi.positions.mockResolvedValue([position()]);
+    mockApi.risk.mockResolvedValue(riskResponse());
+    mockApi.counterparty.mockResolvedValue([]);
+    mockApi.dataQuality.mockResolvedValue({ as_of: "2026-08-05", counts: {}, issues: [] });
+    mockApi.reconciliation.mockResolvedValue({ as_of: "2026-08-05", coverage: [], issues: [] });
+
+    render(<App />);
+    await waitFor(() => expect(screen.getAllByRole("tab")).toHaveLength(4));
+
+    const tabs = screen.getAllByRole("tab");
+    for (const tab of tabs) {
+      const panel = document.getElementById(tab.getAttribute("aria-controls") ?? "");
+      expect(panel, `${tab.textContent} controls a panel that is not rendered`).not.toBeNull();
+      // Exactly one is on show; the rest are hidden, which keeps them out of
+      // the accessibility tree without breaking the reference.
+      expect(panel?.hasAttribute("hidden")).toBe(tab.getAttribute("aria-selected") !== "true");
+    }
+    expect(tabs.filter((tab) => tab.getAttribute("aria-selected") === "true")).toHaveLength(1);
   });
 
   it("fails on a violation, so the check cannot quietly become a no-op", async () => {

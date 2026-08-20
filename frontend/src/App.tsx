@@ -93,6 +93,12 @@ export default function App() {
         </p>
       )}
 
+      {/* Every panel element stays mounted even when its tab is not selected,
+          and is emptied rather than removed. A tab's aria-controls has to name an
+          element that exists: with only the selected panel rendered, three of the
+          four pointed at nothing. `hidden` keeps the inactive ones out of the
+          accessibility tree, and the guard inside keeps their contents unbuilt. */}
+
       {/* The full tab pattern, not buttons wearing aria-selected: that attribute is
           only valid on a handful of roles, and on a plain button a screen reader is
           entitled to ignore it. Roving tabindex and arrow keys come with the pattern
@@ -121,8 +127,13 @@ export default function App() {
         ))}
       </div>
 
-      {tab === "summary" && (
-        <div role="tabpanel" id="panel-summary" aria-labelledby="tab-summary">
+      <div
+        role="tabpanel"
+        id="panel-summary"
+        aria-labelledby="tab-summary"
+        hidden={tab !== "summary"}
+      >
+        {tab === "summary" && (
         <Loadable
           loading={pnl.loading}
           refreshing={pnl.refreshing}
@@ -170,11 +181,16 @@ export default function App() {
             </>
           )}
         </Loadable>
-        </div>
-      )}
+        )}
+      </div>
 
-      {tab === "positions" && (
-        <div role="tabpanel" id="panel-positions" aria-labelledby="tab-positions">
+      <div
+        role="tabpanel"
+        id="panel-positions"
+        aria-labelledby="tab-positions"
+        hidden={tab !== "positions"}
+      >
+        {tab === "positions" && (
         <Loadable
           loading={positions.loading}
           refreshing={positions.refreshing}
@@ -183,50 +199,64 @@ export default function App() {
         >
           {positions.data && <PositionsTable positions={positions.data} />}
         </Loadable>
-        </div>
-      )}
+        )}
+      </div>
 
-      {tab === "risk" && (
-        <div role="tabpanel" id="panel-risk" aria-labelledby="tab-risk">
-        <Loadable
-          loading={risk.loading}
-          refreshing={risk.refreshing}
-          error={risk.error}
-          onRetry={risk.reload}
-        >
-          {risk.data && <RiskGrid risk={risk.data} />}
-          </Loadable>
-          <Loadable
-            loading={counterparty.loading}
-            refreshing={counterparty.refreshing}
-            error={counterparty.error}
-            onRetry={counterparty.reload}
-          >
-            {counterparty.data && <CounterpartyGrid exposures={counterparty.data} />}
-          </Loadable>
-        </div>
-      )}
+      <div
+        role="tabpanel"
+        id="panel-risk"
+        aria-labelledby="tab-risk"
+        hidden={tab !== "risk"}
+      >
+        {tab === "risk" && (
+          <>
+            <Loadable
+              loading={risk.loading}
+              refreshing={risk.refreshing}
+              error={risk.error}
+              onRetry={risk.reload}
+            >
+              {risk.data && <RiskGrid risk={risk.data} />}
+            </Loadable>
+            <Loadable
+              loading={counterparty.loading}
+              refreshing={counterparty.refreshing}
+              error={counterparty.error}
+              onRetry={counterparty.reload}
+            >
+              {counterparty.data && <CounterpartyGrid exposures={counterparty.data} />}
+            </Loadable>
+          </>
+        )}
+      </div>
 
-      {tab === "quality" && (
-        <div role="tabpanel" id="panel-quality" aria-labelledby="tab-quality">
-          <Loadable
-            loading={quality.loading}
-            refreshing={quality.refreshing}
-            error={quality.error}
-            onRetry={quality.reload}
-          >
-            {quality.data && <DataQualityPanel quality={quality.data} />}
-          </Loadable>
-          <Loadable
-            loading={recon.loading}
-            refreshing={recon.refreshing}
-            error={recon.error}
-            onRetry={recon.reload}
-          >
-            {recon.data && <Reconciliation recon={recon.data} />}
-          </Loadable>
-        </div>
-      )}
+      <div
+        role="tabpanel"
+        id="panel-quality"
+        aria-labelledby="tab-quality"
+        hidden={tab !== "quality"}
+      >
+        {tab === "quality" && (
+          <>
+            <Loadable
+              loading={quality.loading}
+              refreshing={quality.refreshing}
+              error={quality.error}
+              onRetry={quality.reload}
+            >
+              {quality.data && <DataQualityPanel quality={quality.data} />}
+            </Loadable>
+            <Loadable
+              loading={recon.loading}
+              refreshing={recon.refreshing}
+              error={recon.error}
+              onRetry={recon.reload}
+            >
+              {recon.data && <Reconciliation recon={recon.data} />}
+            </Loadable>
+          </>
+        )}
+      </div>
     </>
   );
 }
