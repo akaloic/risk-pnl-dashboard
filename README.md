@@ -24,7 +24,7 @@ flowchart LR
   positions --> pnl --> analytics --> api["FastAPI"] --> ui["React screen"]
   positions --> risk --> api
   positions --> counterparty --> api
-  api -. "every answer written<br/>to disk at build time" .-> pages["the link above"]
+  api -. "recorded to disk" .-> pages["published link"]
 ```
 
 Dependencies run one way only, and every engine is testable without starting a
