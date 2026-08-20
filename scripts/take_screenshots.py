@@ -1,27 +1,30 @@
-"""Capture the screenshots the README shows, from the demo dataset.
+"""Capture the screenshots the README shows, off the published build.
 
-Scripted rather than taken by hand so the images can be regenerated when the
-screens change, and so it is obvious they came from demo-data/ -- the desk in
-them is invented, and nothing derived from the confidential extracts is ever
-committed to this repository.
+It photographs the same bundle the deploy workflow uploads, served the same
+way, rather than a development server: the base path only differs in
+production, so a screenshot of `npm run dev` would prove the wrong thing.
+Nothing has to be running behind it -- the build carries its own recorded API.
 
     python scripts/make_demo_data.py
-    RAD_DATA_DIR=demo-data PYTHONPATH=backend uvicorn app.main:app &
-    cd frontend && npm run dev &
+    python scripts/export_static_api.py
+    cd frontend && BASE_PATH=/risk-pnl-dashboard/ VITE_STATIC_API=1 npm run build
+    cd frontend && npm run preview &
     <scratch-venv>/bin/python scripts/take_screenshots.py
 
-Playwright drives a real Chrome rather than downloading its own: the tab strip
-holds its state in React, so there is no URL to point a plain screenshot tool
-at, and the views have to be clicked through.
+The desk in them is invented, which the header of every one of them says.
+Playwright drives a real Chrome rather than downloading its own; the tab strip
+holds its state in React, so the views have to be clicked through rather than
+pointed at.
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-APP = "http://localhost:5173"
+APP = os.environ.get("SCREENSHOT_URL", "http://localhost:4173/risk-pnl-dashboard/")
 OUT = Path(__file__).resolve().parents[1] / "docs" / "screenshots"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
@@ -76,4 +79,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as failure:  # noqa: BLE001 -- a script, not a library
-        sys.exit(f"screenshots failed: {failure}\nAre both servers running?")
+        sys.exit(f"screenshots failed: {failure}\nIs `npm run preview` serving {APP}?")
